@@ -11,13 +11,14 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 interface SpecialistCardProps {
-  id: string;
+  id: number;
   name: string;
   category: string;
   rating: number;
-  reviewCount: number;
-  location: string;
-  imageUrl: string;
+  review_count: number;
+  location: string | null;
+  image_url: string | null;
+  bio?: string | null;
   index?: number;
   onClick?: () => void;
 }
@@ -26,12 +27,13 @@ export function SpecialistCard({
   name,
   category,
   rating,
-  reviewCount,
+  review_count,
   location,
-  imageUrl,
+  image_url,
   index = 0,
   onClick,
 }: SpecialistCardProps) {
+  // bio is available but not displayed in card view
   return (
     <motion.div
       layoutId={`card-${name}`}
@@ -53,48 +55,41 @@ export function SpecialistCard({
       )}
       onClick={onClick}
     >
-      {/* Image Container */}
       <div className="relative h-48 w-full overflow-hidden">
         <img
-          src={imageUrl}
+          src={image_url || 'https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=400'}
           alt={name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80" />
         
-        {/* Category Badge */}
         <div className="absolute top-3 left-3 glass px-2 py-1 rounded-sharp text-xs font-medium">
           {CATEGORY_MAP[category] || category}
         </div>
 
-        {/* Rating Badge */}
         <div className="absolute top-3 right-3 glass px-2 py-1 rounded-sharp flex items-center gap-1">
           <span className="text-accent">★</span>
           <span className="text-xs font-semibold">{rating}</span>
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-4 space-y-2">
         <h3 className="text-lg font-semibold text-accent tracking-tight">
           {name}
         </h3>
         
         <div className="flex items-center gap-2 text-sm text-gray-400">
-          <span>{location}</span>
+          <span>{location || 'Москва'}</span>
           <span>•</span>
-          <span>{reviewCount} отзывов</span>
+          <span>{review_count} отзывов</span>
         </div>
 
-        {/* Hover Glow Effect */}
         <div className="absolute inset-0 border border-white/0 group-hover:border-white/10 rounded-soft transition-colors duration-300 pointer-events-none" />
       </div>
     </motion.div>
   );
 }
 
-// Skeleton Loader for Specialist Card
 export function SpecialistCardSkeleton() {
   return (
     <div className="rounded-soft bg-card border border-border overflow-hidden">

@@ -1,77 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../lib/auth';
+import { getSpecialists as fetchSpecialists, getSpecialistById } from '../lib/api';
 import { SpecialistCard, SpecialistCardSkeleton } from '../components/SpecialistCard';
 import { CategoryScroll } from '../components/CategoryScroll';
 import { SearchBar } from '../components/SearchBar';
 import { SpecialistProfile } from '../components/SpecialistProfile';
 import { ProOnboardingForm } from '../components/ProOnboardingForm';
-import { Specialist } from '@/types';
-
-const MOCK_SPECIALISTS: Specialist[] = [
-  {
-    id: '1',
-    name: 'Ink Master Studio',
-    category: 'tattoo',
-    rating: 4.9,
-    reviewCount: 234,
-    location: 'Москва',
-    imageUrl: 'https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=400',
-    bio: 'Мастера татуировки с многолетним опытом. Специализация: реализм и длинная работа.',
-    services: [
-      { id: 's1', name: 'Маленькая татуировка', price: 150, duration: 60 },
-      { id: 's2', name: 'Средний размер', price: 350, duration: 180 },
-      { id: 's3', name: 'Рукав полностью', price: 1200, duration: 480 },
-    ],
-    portfolio: [
-      { id: 'p1', imageUrl: 'https://images.unsplash.com/photo-1560707303-4e9803d1ad31?w=300', title: 'Dragon Design' },
-      { id: 'p2', imageUrl: 'https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=300', title: 'Floral Work' },
-      { id: 'p3', imageUrl: 'https://images.unsplash.com/photo-1590246294792-a8b137c4096a?w=300', title: 'Portrait' },
-      { id: 'p4', imageUrl: 'https://images.unsplash.com/photo-1562962230-16bc46364924?w=300', title: 'Geometric' },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Luxe Nails Bar',
-    category: 'nails',
-    rating: 4.8,
-    reviewCount: 189,
-    location: 'Москва',
-    imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400',
-    bio: 'Премиальный нейл-арт и уход за ногтями.',
-    services: [
-      { id: 's1', name: 'Гель-маникюр', price: 45, duration: 45 },
-      { id: 's2', name: 'Акрил полный набор', price: 75, duration: 90 },
-      { id: 's3', name: 'Нейл-арт (за ноготь)', price: 5, duration: 10 },
-    ],
-    portfolio: [
-      { id: 'p1', imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=300', title: 'Ombre Gel' },
-      { id: 'p2', imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?w=300', title: 'French Tips' },
-      { id: 'p3', imageUrl: 'https://images.unsplash.com/photo-1632922267756-9b71242b1592?w=300', title: 'Nail Art' },
-      { id: 'p4', imageUrl: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=300', title: 'Matte Finish' },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Pierce Paradise',
-    category: 'piercing',
-    rating: 4.7,
-    reviewCount: 156,
-    location: 'Москва',
-    imageUrl: 'https://images.unsplash.com/photo-1620331313174-9187a5f5a5f8?w=400',
-    bio: 'Профессиональная пирсинг-студия со стерильной средой.',
-    services: [
-      { id: 's1', name: 'Прокол мочки', price: 30, duration: 15 },
-      { id: 's2', name: 'Хрящ', price: 45, duration: 20 },
-      { id: 's3', name: 'Нос прокол', price: 50, duration: 20 },
-    ],
-    portfolio: [
-      { id: 'p1', imageUrl: 'https://images.unsplash.com/photo-1620331313174-9187a5f5a5f8?w=300', title: 'Ear Stack' },
-      { id: 'p2', imageUrl: 'https://images.unsplash.com/photo-1574676539904-e6c8e0655f07?w=300', title: 'Septum' },
-      { id: 'p3', imageUrl: 'https://images.unsplash.com/photo-1599557283988-85433613f9cd?w=300', title: 'Daith' },
-      { id: 'p4', imageUrl: 'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?w=300', title: 'Industrial' },
-    ],
-  },
-];
+import type { Specialist, Service } from '../lib/supabase';
 
 const CATEGORIES = [
   { id: 'all', name: 'Все', icon: '🔍' },
@@ -88,40 +24,69 @@ interface HomeProps {
   onTabChange: (tab: string) => void;
 }
 
+interface SpecialistWithServices extends Specialist {
+  services?: Service[];
+}
+
 export default function Home({ activeTab, onTabChange }: HomeProps) {
+  const { user } = useAuth();
+  const [specialists, setSpecialists] = useState<SpecialistWithServices[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
+  const [selectedSpecialist, setSelectedSpecialist] = useState<SpecialistWithServices | null>(null);
   const [showProOnboarding, setShowProOnboarding] = useState(false);
   const [isProMode, setIsProMode] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    loadSpecialists();
+  }, [selectedCategory]);
 
-  const filteredSpecialists = MOCK_SPECIALISTS.filter((specialist) => {
-    const matchesCategory = selectedCategory === 'all' || specialist.category === selectedCategory;
-    const matchesSearch = specialist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      specialist.bio.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const handleBookService = (service: any) => {
-    alert(`Бронирование ${service.name} за $${service.price}`);
+  const loadSpecialists = async () => {
+    setIsLoading(true);
+    const data = await fetchSpecialists(selectedCategory === 'all' ? undefined : selectedCategory);
+    setSpecialists(data as SpecialistWithServices[]);
+    setIsLoading(false);
   };
 
-  const handleProOnboardingComplete = (data: any) => {
-    console.log('Pro profile created:', data);
-    setShowProOnboarding(false);
-    setIsProMode(true);
+  const filteredSpecialists = specialists.filter((specialist) => {
+    const matchesSearch = !searchQuery || 
+      specialist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (specialist.bio?.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesSearch;
+  });
+
+  const handleBookService = async (serviceId: number) => {
+    if (!user || !selectedSpecialist) {
+      alert('Сначала войдите через Telegram');
+      return;
+    }
+    
+    const { createBooking } = await import('../lib/api');
+    const date = new Date().toISOString();
+    const result = await createBooking(user.id, selectedSpecialist.id, serviceId, date);
+    
+    if (result.success) {
+      alert('Бронирование создано!');
+      setSelectedSpecialist(null);
+    } else {
+      alert('Ошибка: ' + result.error);
+    }
+  };
+
+  const openSpecialist = async (specialist: Specialist) => {
+    const fullData = await getSpecialistById(specialist.id);
+    setSelectedSpecialist(fullData as SpecialistWithServices);
   };
 
   if (showProOnboarding) {
     return (
       <ProOnboardingForm
-        onComplete={handleProOnboardingComplete}
+        onComplete={(data) => {
+          console.log('Pro profile created:', data);
+          setShowProOnboarding(false);
+          setIsProMode(true);
+        }}
         onCancel={() => setShowProOnboarding(false)}
       />
     );
@@ -132,7 +97,7 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
       <SpecialistProfile
         specialist={selectedSpecialist}
         onBack={() => setSelectedSpecialist(null)}
-        onBook={handleBookService}
+        onBook={(service) => handleBookService(service.id)}
       />
     );
   }
@@ -144,7 +109,7 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
           <h1 className="text-2xl font-bold tracking-tight">BeautyFind</h1>
           <button
             onClick={() => setIsProMode(!isProMode)}
-            className="px-3 py-1.5 text-xs font-medium border border-border rounded-sharp hover:bg-white/5 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium border border-border rounded-sharp hover:bg-white/5"
           >
             {isProMode ? 'Клиент' : 'Мастер'}
           </button>
@@ -164,10 +129,10 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
           <h2 className="text-lg font-semibold">
             {isProMode ? 'Ваш кабинет' : 'Популярные мастера'}
           </h2>
-          {!isProMode && (
+          {!isProMode && user && (
             <button
               onClick={() => setShowProOnboarding(true)}
-              className="text-xs text-gray-400 hover:text-accent transition-colors"
+              className="text-xs text-gray-400 hover:text-accent"
             >
               Стать мастером →
             </button>
@@ -177,7 +142,7 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
         {isProMode ? (
           <div className="glass p-6 rounded-soft text-center">
             <h3 className="font-semibold mb-2">Добро пожаловать</h3>
-            <p className="text-sm text-gray-400 mb-4">Управляйте бронированиями и профилем</p>
+            <p className="text-sm text-gray-400 mb-4">Управляйте бронированиями</p>
             <button
               onClick={() => setShowProOnboarding(true)}
               className="px-4 py-2 bg-accent text-background rounded-soft text-sm font-semibold"
@@ -198,9 +163,15 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
                 filteredSpecialists.map((specialist, index) => (
                   <SpecialistCard
                     key={specialist.id}
-                    {...specialist}
+                    id={specialist.id}
+                    name={specialist.name}
+                    category={specialist.category}
+                    rating={specialist.rating}
+                    review_count={specialist.review_count}
+                    location={specialist.location}
+                    image_url={specialist.image_url}
                     index={index}
-                    onClick={() => setSelectedSpecialist(specialist)}
+                    onClick={() => openSpecialist(specialist)}
                   />
                 ))
               ) : (
@@ -210,7 +181,6 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
                   className="text-center py-12 text-gray-400"
                 >
                   <p>Мастера не найдены</p>
-                  <p className="text-sm mt-1">Попробуйте изменить поиск</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -218,7 +188,6 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
         )}
       </section>
 
-      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 glass border-t border-border safe-area-bottom">
         <div className="flex justify-around items-center py-2 px-4">
           {[
