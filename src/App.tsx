@@ -10,9 +10,9 @@ function App() {
   const renderPage = () => {
     switch (activeTab) {
       case 'bookings':
-        return <Bookings />;
+        return <Bookings activeTab={activeTab} onTabChange={setActiveTab} />;
       case 'profile':
-        return <Profile />;
+        return <Profile activeTab={activeTab} onTabChange={setActiveTab} />;
       default:
         return <Home activeTab={activeTab} onTabChange={setActiveTab} />;
     }
