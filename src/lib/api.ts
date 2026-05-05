@@ -1,31 +1,63 @@
-import { db, type Specialist, type Service } from './db';
+const API_URL = 'http://localhost:3001/api';
+
+export interface Specialist {
+  id: number;
+  name: string;
+  category: string;
+  bio: string | null;
+  rating: number;
+  review_count: number;
+  location: string | null;
+  image_url: string | null;
+  services?: Service[];
+}
+
+export interface Service {
+  id: number;
+  specialist_id: number;
+  name: string;
+  price: number;
+  duration: number;
+}
+
+export interface User {
+  id: number;
+  telegram_id: number;
+  name: string;
+}
 
 export async function getSpecialists(category?: string): Promise<Specialist[]> {
   try {
-    const specialists = await db.getSpecialists(category);
-    return specialists;
+    const url = category && category !== 'all' 
+      ? `${API_URL}/specialists?category=${category}` 
+      : `${API_URL}/specialists`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch');
+    return await res.json();
   } catch (e) {
-    console.log('Using mock data - DB not connected');
+    console.log('API not available, showing demo data');
     return getMockSpecialists();
   }
 }
 
 export async function getSpecialistById(id: number): Promise<Specialist | null> {
   try {
-    return await db.getSpecialistById(id);
+    const res = await fetch(`${API_URL}/specialists/${id}`);
+    if (!res.ok) throw new Error('Failed to fetch');
+    return await res.json();
   } catch (e) {
     const mock = getMockSpecialists();
     return mock.find(s => s.id === id) || null;
   }
 }
 
-export async function getServices(specialistId: number): Promise<Service[]> {
-  try {
-    const specialist = await db.getSpecialistById(specialistId);
-    return specialist?.services || [];
-  } catch (e) {
-    return [];
-  }
+export async function createUser(telegramId: number, name: string): Promise<User> {
+  const res = await fetch(`${API_URL}/users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ telegram_id: telegramId, name }),
+  });
+  return await res.json();
 }
 
 export async function createBooking(
@@ -35,40 +67,46 @@ export async function createBooking(
   date: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await db.createBooking(userId, specialistId, serviceId, date);
-    return { success: true };
+    const res = await fetch(`${API_URL}/bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: userId,
+        specialist_id: specialistId,
+        service_id: serviceId,
+        date,
+      }),
+    });
+    await res.json();
+    return { success: res.ok };
   } catch (e) {
-    console.error('Booking error:', e);
     return { success: false, error: String(e) };
   }
 }
 
 export async function getUserBookings(userId: number): Promise<any[]> {
   try {
-    return await db.getUserBookings(userId);
+    const res = await fetch(`${API_URL}/bookings/${userId}`);
+    return await res.json();
   } catch (e) {
     return [];
   }
 }
 
-// Mock data fallback
 function getMockSpecialists(): Specialist[] {
   return [
     {
       id: 1,
       name: 'Ink Master Studio',
       category: 'tattoo',
-      bio: 'Мастера татуировки с многолетним опытом',
+      bio: 'Мастера татуировки',
       rating: 4.9,
       review_count: 234,
       location: 'Москва',
       image_url: 'https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=400',
-      user_id: null,
-      created_at: new Date().toISOString(),
       services: [
-        { id: 1, specialist_id: 1, name: 'Маленькая татуировка', price: 150, duration: 60 },
+        { id: 1, specialist_id: 1, name: 'Маленькая тату', price: 150, duration: 60 },
         { id: 2, specialist_id: 1, name: 'Средний размер', price: 350, duration: 180 },
-        { id: 3, specialist_id: 1, name: 'Рукав', price: 1200, duration: 480 },
       ],
     },
     {
@@ -80,27 +118,21 @@ function getMockSpecialists(): Specialist[] {
       review_count: 189,
       location: 'Москва',
       image_url: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400',
-      user_id: null,
-      created_at: new Date().toISOString(),
       services: [
-        { id: 4, specialist_id: 2, name: 'Гель-маникюр', price: 45, duration: 45 },
-        { id: 5, specialist_id: 2, name: 'Акрил', price: 75, duration: 90 },
+        { id: 3, specialist_id: 2, name: 'Гель-маникюр', price: 45, duration: 45 },
       ],
     },
     {
       id: 3,
       name: 'Pierce Paradise',
       category: 'piercing',
-      bio: 'Профессиональная пирсинг-студия',
+      bio: 'Пирсинг-студия',
       rating: 4.7,
       review_count: 156,
       location: 'Москва',
       image_url: 'https://images.unsplash.com/photo-1620331313174-9187a5f5a5f8?w=400',
-      user_id: null,
-      created_at: new Date().toISOString(),
       services: [
-        { id: 6, specialist_id: 3, name: 'Прокол мочки', price: 30, duration: 15 },
-        { id: 7, specialist_id: 3, name: 'Хрящ', price: 45, duration: 20 },
+        { id: 4, specialist_id: 3, name: 'Прокол мочки', price: 30, duration: 15 },
       ],
     },
   ];

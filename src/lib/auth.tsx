@@ -1,5 +1,11 @@
 import { useEffect, useState, createContext, useContext } from 'react';
-import { db, type User } from './db';
+import { createUser } from './api';
+
+interface User {
+  id: number;
+  telegram_id: number;
+  name: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -24,23 +30,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const params = JSON.parse(stored);
       if (params.telegram_id) {
         try {
-          let existingUser = await db.getUser(params.telegram_id);
-          
-          if (!existingUser) {
-            existingUser = await db.createUser(params.telegram_id, params.name || 'Пользователь');
-          }
-          
-          if (existingUser) {
-            setUser(existingUser);
-          }
+          const newUser = await createUser(params.telegram_id, params.name || 'Пользователь');
+          setUser(newUser);
         } catch (e) {
-          console.log('Using local user');
           setUser({
             id: Date.now(),
             telegram_id: params.telegram_id,
             name: params.name,
-            phone: null,
-            created_at: new Date().toISOString(),
           });
         }
       }
@@ -50,23 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (telegramId: number, name?: string) => {
     try {
-      let existingUser = await db.getUser(telegramId);
-      
-      if (!existingUser) {
-        existingUser = await db.createUser(telegramId, name || 'Пользователь');
-      }
-      
-      if (existingUser) {
-        setUser(existingUser);
-        localStorage.setItem('prism_user', JSON.stringify(existingUser));
-      }
+      const newUser = await createUser(telegramId, name || 'Пользователь');
+      setUser(newUser);
+      localStorage.setItem('prism_user', JSON.stringify(newUser));
     } catch (e) {
       const offlineUser = {
         id: Date.now(),
         telegram_id: telegramId,
         name: name || 'Пользователь',
-        phone: null,
-        created_at: new Date().toISOString(),
       };
       setUser(offlineUser);
       localStorage.setItem('prism_user', JSON.stringify(offlineUser));
