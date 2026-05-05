@@ -2,28 +2,33 @@
 # Dependencies
 node_modules/
 
-# Build outputs
+# Build artifacts
 dist/
 build/
-*.tsbuildinfo
+*.d.ts
 
-# Environment variables
+# Environment
 .env
 .env.local
 *.env.*
 
-# Database
-data/marketplace.db
+# Editors
+.vscode/
+.idea/
 
 # Logs
 *.log
 
-# Editor/IDE
-.vscode/
-.idea/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary files
+*.tmp
 *.swp
 *.swo
-*.tmp
 
 # OS
 .DS_Store
@@ -34,17 +39,13 @@ coverage/
 htmlcov/
 .coverage
 
-# Python (if any Python files exist in the project)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-*.so
-.Python
+# MyPy
+.mypy_cache/
+
+# PyTest
+.pytest_cache/
+
+# Vite
+!.vite/
+vite.config.d.ts
 ```

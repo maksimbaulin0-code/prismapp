@@ -1,13 +1,25 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SpecialistCard, SpecialistCardSkeleton } from './SpecialistCard';
-import { CategoryScroll } from './CategoryScroll';
-import { SearchBar } from './SearchBar';
-import { BottomNav } from './BottomNav';
-import { SpecialistProfile } from './SpecialistProfile';
-import { ProOnboardingForm } from './ProOnboardingForm';
+import { SpecialistCard, SpecialistCardSkeleton } from '../components/SpecialistCard';
+import { CategoryScroll } from '../components/CategoryScroll';
+import { SearchBar } from '../components/SearchBar';
+import { BottomNav } from '../components/BottomNav';
+import { SpecialistProfile } from '../components/SpecialistProfile';
+import { ProOnboardingForm } from '../components/ProOnboardingForm';
 import { Specialist, CategoryType } from '@/types';
 import { useTelegram } from '@/hooks/useTelegram';
+import { 
+  Search, 
+  Calendar, 
+  User, 
+  Sparkles, 
+  Palette, 
+  Scissors, 
+  Star, 
+  MapPin,
+  ChevronRight,
+  Plus
+} from 'lucide-react';
 
 // Mock data
 const MOCK_SPECIALISTS: Specialist[] = [
@@ -77,13 +89,13 @@ const MOCK_SPECIALISTS: Specialist[] = [
 ];
 
 const CATEGORIES = [
-  { id: 'all', name: 'All', icon: '🔍' },
-  { id: 'tattoo', name: 'Tattoo', icon: '🎨' },
-  { id: 'nails', name: 'Nails', icon: '💅' },
-  { id: 'piercing', name: 'Piercing', icon: '✨' },
-  { id: 'makeup', name: 'Makeup', icon: '💄' },
-  { id: 'hair', name: 'Hair', icon: '💇' },
-  { id: 'lashes', name: 'Lashes', icon: '👁️' },
+  { id: 'all', name: 'All', icon: <Search className="w-4 h-4" /> },
+  { id: 'tattoo', name: 'Tattoo', icon: <Palette className="w-4 h-4" /> },
+  { id: 'nails', name: 'Nails', icon: <Sparkles className="w-4 h-4" /> },
+  { id: 'piercing', name: 'Piercing', icon: <Star className="w-4 h-4" /> },
+  { id: 'makeup', name: 'Makeup', icon: <Scissors className="w-4 h-4" /> },
+  { id: 'hair', name: 'Hair', icon: <Scissors className="w-4 h-4" /> },
+  { id: 'lashes', name: 'Lashes', icon: <Sparkles className="w-4 h-4" /> },
 ];
 
 export default function Home() {
@@ -170,27 +182,40 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <header className="sticky top-0 glass border-b border-border px-4 py-4 z-10">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold tracking-tight">
-            BeautyFind
-            {user && <span className="text-xs font-normal text-gray-400 ml-2">Hi, {user.firstName}!</span>}
-          </h1>
-          <button
-            onClick={() => setIsProMode(!isProMode)}
-            className="px-3 py-1.5 text-xs font-medium border border-border rounded-sharp hover:bg-white/5 transition-colors"
-          >
-            {isProMode ? 'Client View' : 'Pro Mode'}
-          </button>
+      {/* Header - Vercel-style sticky nav */}
+      <header className="sticky top-0 glass-strong border-b border-border z-50">
+        <div className="px-4 py-3">
+          {/* Breadcrumb-style header */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-semibold tracking-tight">BeautyFind</h1>
+              <span className="text-border">/</span>
+              <span className="text-xs text-accent-secondary">Discovery</span>
+            </div>
+            <button
+              onClick={() => setIsProMode(!isProMode)}
+              className={`px-2.5 py-1.5 text-xs font-medium border border-border rounded-sharp hover:border-border-hover transition-all duration-200 ${
+                isProMode ? 'bg-white/5 text-accent' : 'text-accent-secondary'
+              }`}
+            >
+              {isProMode ? 'Pro Dashboard' : 'Pro Mode'}
+            </button>
+          </div>
+          
+          {/* User greeting */}
+          {user && (
+            <p className="text-xs text-accent-secondary mb-3">
+              Welcome back, <span className="text-accent">{user.firstName}</span>
+            </p>
+          )}
+          
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
-        
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
       </header>
 
-      {/* Categories */}
+      {/* Categories - Horizontal scroll */}
       <CategoryScroll
-        categories={CATEGORIES.map((c) => ({ ...c, icon: <span>{c.icon}</span> }))}
+        categories={CATEGORIES}
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
       />
@@ -198,30 +223,57 @@ export default function Home() {
       {/* Featured Section */}
       <section className="px-4 py-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">
-            {isProMode ? 'Your Dashboard' : 'Featured Specialists'}
+          <h2 className="text-sm font-semibold text-accent-secondary uppercase tracking-wider">
+            {isProMode ? 'Dashboard' : 'Featured Specialists'}
           </h2>
           {!isProMode && (
             <button
               onClick={() => setShowProOnboarding(true)}
-              className="text-xs text-gray-400 hover:text-accent transition-colors"
+              className="flex items-center gap-1 text-xs text-accent-secondary hover:text-accent transition-colors"
             >
-              Become a Pro →
+              <Plus className="w-3 h-3" />
+              Become a Pro
             </button>
           )}
         </div>
 
         {isProMode ? (
-          <div className="glass p-6 rounded-soft text-center">
-            <h3 className="font-semibold mb-2">Welcome to Pro Dashboard</h3>
-            <p className="text-sm text-gray-400 mb-4">Manage your bookings, services, and portfolio.</p>
-            <button
-              onClick={() => setShowProOnboarding(true)}
-              className="px-4 py-2 bg-accent text-background rounded-soft text-sm font-semibold"
-            >
-              Edit Profile
-            </button>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            <div className="glass p-5 rounded-soft border border-border">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">Pro Dashboard</h3>
+                <span className="status-dot green" title="Active" />
+              </div>
+              <p className="text-sm text-accent-secondary mb-4">
+                Manage your bookings, services, and portfolio from here.
+              </p>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="text-center p-3 bg-card rounded-sharp border border-border">
+                  <p className="text-lg font-bold">12</p>
+                  <p className="text-xs text-accent-secondary">Bookings</p>
+                </div>
+                <div className="text-center p-3 bg-card rounded-sharp border border-border">
+                  <p className="text-lg font-bold">4.9</p>
+                  <p className="text-xs text-accent-secondary">Rating</p>
+                </div>
+                <div className="text-center p-3 bg-card rounded-sharp border border-border">
+                  <p className="text-lg font-bold">28</p>
+                  <p className="text-xs text-accent-secondary">Reviews</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowProOnboarding(true)}
+                className="w-full py-2.5 bg-accent text-background rounded-soft text-sm font-semibold hover:bg-white/90 transition-colors flex items-center justify-center gap-2"
+              >
+                Edit Profile
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
         ) : isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -247,10 +299,11 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-12 text-gray-400"
+                  className="text-center py-12 text-accent-secondary"
                 >
-                  <p>No specialists found</p>
-                  <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                  <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm">No specialists found</p>
+                  <p className="text-xs mt-1">Try adjusting your search or filters</p>
                 </motion.div>
               )}
             </AnimatePresence>

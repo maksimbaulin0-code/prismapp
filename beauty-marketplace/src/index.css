@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Inter', 'Geist', system-ui, sans-serif;
+  font-family: 'Inter', 'Geist', system-ui, -apple-system, sans-serif;
   background-color: #000000;
   color: #FFFFFF;
+  letter-spacing: -0.02em;
 }
 
 body {
@@ -27,15 +28,23 @@ body {
   scrollbar-width: none;
 }
 
-/* Glassmorphism utility */
+/* Glassmorphism utility - Vercel style */
 .glass {
-  background: rgba(10, 10, 10, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(26, 26, 26, 0.5);
+  background: rgba(8, 8, 8, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(26, 26, 26, 0.6);
 }
 
-/* Skeleton loader animation */
+/* Glass with stronger border for navigation */
+.glass-strong {
+  background: rgba(8, 8, 8, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(51, 51, 51, 0.8);
+}
+
+/* Skeleton loader animation - left to right shimmer */
 .skeleton-loader {
   background: linear-gradient(
     90deg,
@@ -56,7 +65,52 @@ body {
   }
 }
 
-/* Subtle glow for active elements */
+/* Subtle glow for active elements - Vercel engineering aesthetic */
 .glow-active {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+/* Inner glow for buttons */
+.glow-inner {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Status indicator dots */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.green {
+  background-color: #00DC82;
+  box-shadow: 0 0 8px rgba(0, 220, 130, 0.4);
+}
+
+.status-dot.amber {
+  background-color: #F59E0B;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.status-dot.red {
+  background-color: #EF4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+/* Grid pattern background (subtle) */
+.grid-pattern {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Safe area for mobile devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
 }
