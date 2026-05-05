@@ -47,4 +47,4 @@ vite.config.ts
 
 # TypeScript/JavaScript build artifacts
 *.tsbuildinfo
-```
+```.DS_Store
