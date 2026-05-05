@@ -1,6 +1,15 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+const CATEGORY_MAP: Record<string, string> = {
+  tattoo: 'Тату',
+  nails: 'Ногти',
+  piercing: 'Пирсинг',
+  makeup: 'Макияж',
+  hair: 'Волосы',
+  lashes: 'Ресницы',
+};
+
 interface SpecialistCardProps {
   id: string;
   name: string;
@@ -56,7 +65,7 @@ export function SpecialistCard({
         
         {/* Category Badge */}
         <div className="absolute top-3 left-3 glass px-2 py-1 rounded-sharp text-xs font-medium">
-          {category}
+          {CATEGORY_MAP[category] || category}
         </div>
 
         {/* Rating Badge */}
@@ -75,7 +84,7 @@ export function SpecialistCard({
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <span>{location}</span>
           <span>•</span>
-          <span>{reviewCount} reviews</span>
+          <span>{reviewCount} отзывов</span>
         </div>
 
         {/* Hover Glow Effect */}

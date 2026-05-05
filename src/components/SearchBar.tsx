@@ -7,7 +7,7 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-export function SearchBar({ value, onChange, placeholder = 'Search specialists...' }: SearchBarProps) {
+export function SearchBar({ value, onChange, placeholder = 'Поиск мастеров...' }: SearchBarProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}

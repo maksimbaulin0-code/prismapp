@@ -3,6 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Specialist, Service } from '@/types';
 
+const CATEGORY_MAP: Record<string, string> = {
+  tattoo: 'Тату',
+  nails: 'Ногти',
+  piercing: 'Пирсинг',
+  makeup: 'Макияж',
+  hair: 'Волосы',
+  lashes: 'Ресницы',
+};
+
 interface SpecialistProfileProps {
   specialist: Specialist;
   onBack: () => void;
@@ -40,7 +49,7 @@ export function SpecialistProfile({ specialist, onBack, onBook }: SpecialistProf
           className="w-full py-3 bg-accent text-background rounded-soft font-semibold glow-active"
           onClick={() => selectedService && onBook(specialist.services.find(s => s.id === selectedService)!)}
         >
-          Book Now{selectedService ? ` - $${specialist.services.find(s => s.id === selectedService)?.price}` : ''}
+          Забронировать{selectedService ? ` - ${specialist.services.find(s => s.id === selectedService)?.price}₽` : ''}
         </motion.button>
       </div>
 
@@ -59,7 +68,7 @@ export function SpecialistProfile({ specialist, onBack, onBook }: SpecialistProf
           <div className="absolute bottom-4 left-4 right-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="glass px-2 py-1 rounded-sharp text-xs font-medium">
-                {specialist.category}
+                {CATEGORY_MAP[specialist.category] || specialist.category}
               </span>
               <span className="glass px-2 py-1 rounded-sharp flex items-center gap-1 text-xs">
                 <span>★</span>
@@ -73,13 +82,13 @@ export function SpecialistProfile({ specialist, onBack, onBook }: SpecialistProf
 
         {/* Bio */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">About</h2>
+          <h2 className="text-lg font-semibold mb-2">О себе</h2>
           <p className="text-gray-400 text-sm leading-relaxed">{specialist.bio}</p>
         </div>
 
         {/* Services List */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Services</h2>
+          <h2 className="text-lg font-semibold mb-3">Услуги</h2>
           <div className="space-y-2">
             {specialist.services.map((service) => (
               <motion.div
@@ -100,10 +109,10 @@ export function SpecialistProfile({ specialist, onBack, onBook }: SpecialistProf
                   <div>
                     <h3 className="font-medium">{service.name}</h3>
                     <p className={cn('text-xs mt-1', selectedService === service.id ? 'text-background/70' : 'text-gray-400')}>
-                      {service.duration} min
+                      {service.duration} мин
                     </p>
                   </div>
-                  <span className="font-semibold">${service.price}</span>
+                  <span className="font-semibold">{service.price}₽</span>
                 </div>
               </motion.div>
             ))}
@@ -112,7 +121,7 @@ export function SpecialistProfile({ specialist, onBack, onBook }: SpecialistProf
 
         {/* Portfolio Grid */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Portfolio</h2>
+          <h2 className="text-lg font-semibold mb-3">Портфолио</h2>
           <div className="grid grid-cols-2 gap-2">
             {specialist.portfolio.map((item, index) => (
               <motion.div
