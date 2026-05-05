@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import type { Specialist, Service } from '@/lib/db';
+import type { Specialist, Service } from '@/lib/api';
 
 const CATEGORY_MAP: Record<string, string> = {
   tattoo: 'Тату',
@@ -22,7 +22,7 @@ export function SpecialistProfile({ specialist, onBack, onBook }: SpecialistProf
   const [selectedService, setSelectedService] = useState<number | null>(null);
 
   const services = specialist.services || [];
-  const selectedServiceData = services.find(s => s.id === selectedService);
+  const selectedServiceData = services.find((s: Service) => s.id === selectedService);
 
   return (
     <motion.div
@@ -92,7 +92,7 @@ export function SpecialistProfile({ specialist, onBack, onBook }: SpecialistProf
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-3">Услуги</h2>
           <div className="space-y-2">
-            {services.map((service) => (
+            {services.map((service: Service) => (
               <motion.div
                 key={service.id}
                 layoutId={`service-${service.id}`}

@@ -26,6 +26,15 @@ export interface User {
   name: string;
 }
 
+export interface Booking {
+  id: number;
+  user_id: number;
+  specialist_id: number;
+  service_id: number;
+  date: string;
+  status: string;
+}
+
 export async function getSpecialists(category?: string): Promise<Specialist[]> {
   try {
     const url = category && category !== 'all' 

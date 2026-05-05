@@ -4,6 +4,11 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    allowedHosts: ['lowly-unthreaded-colleen.ngrok-free.dev', 'localhost'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

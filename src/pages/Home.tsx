@@ -7,7 +7,7 @@ import { CategoryScroll } from '../components/CategoryScroll';
 import { SearchBar } from '../components/SearchBar';
 import { SpecialistProfile } from '../components/SpecialistProfile';
 import { ProOnboardingForm } from '../components/ProOnboardingForm';
-import type { Specialist, Service } from '../lib/db';
+import type { Specialist, Service } from '../lib/api';
 
 const CATEGORIES = [
   { id: 'all', name: 'Все', icon: '🔍' },
@@ -131,7 +131,12 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
           </h2>
           {!isProMode && user && (
             <button
-              onClick={() => setShowProOnboarding(true)}
+              onClick={() => {
+                if (user) {
+                  setIsProMode(true);
+                  setShowProOnboarding(true);
+                }
+              }}
               className="text-xs text-gray-400 hover:text-accent"
             >
               Стать мастером →
@@ -140,16 +145,13 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
         </div>
 
         {isProMode ? (
-          <div className="glass p-6 rounded-soft text-center">
-            <h3 className="font-semibold mb-2">Добро пожаловать</h3>
-            <p className="text-sm text-gray-400 mb-4">Управляйте бронированиями</p>
-            <button
-              onClick={() => setShowProOnboarding(true)}
-              className="px-4 py-2 bg-accent text-background rounded-soft text-sm font-semibold"
-            >
-              Редактировать
-            </button>
-          </div>
+          <ProOnboardingForm
+            onComplete={async (data) => {
+              console.log('Pro profile:', data);
+              setShowProOnboarding(false);
+            }}
+            onCancel={() => setShowProOnboarding(false)}
+          />
         ) : isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (

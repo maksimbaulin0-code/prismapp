@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../lib/auth';
 import { getUserBookings } from '../lib/api';
-import { Booking } from '../lib/db';
 
 interface BookingsProps {
   activeTab: string;
@@ -11,7 +10,7 @@ interface BookingsProps {
 
 export default function Bookings({ activeTab, onTabChange }: BookingsProps) {
   const { user } = useAuth();
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeSegment, setActiveSegment] = useState('upcoming');
 
@@ -69,7 +68,7 @@ export default function Bookings({ activeTab, onTabChange }: BookingsProps) {
           </div>
         ) : displayBookings.length > 0 ? (
           <div className="space-y-4">
-            {displayBookings.map((booking) => (
+            {displayBookings.map((booking: any) => (
               <motion.div
                 key={booking.id}
                 className="glass p-4 rounded-soft"
