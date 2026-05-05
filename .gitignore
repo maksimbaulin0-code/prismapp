@@ -1,4 +1,3 @@
-```
 # Dependencies
 node_modules/
 
@@ -21,14 +20,6 @@ coverage/
 # Logs
 *.log
 
-# Python related (if any Python files exist in project)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-
 # Temporary files
 *.tmp
 *.temp
@@ -41,10 +32,5 @@ Thumbs.db
 .coverage
 htmlcov/
 
-# Vite specific
-!.vite/
-vite.config.ts
-
 # TypeScript/JavaScript build artifacts
 *.tsbuildinfo
-```.DS_Store
