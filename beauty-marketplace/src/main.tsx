@@ -24,9 +24,13 @@ function TelegramInit({ children }: { children: React.ReactNode }) {
       // Expand to full height
       tg.expand()
       
-      // Set header color to match our dark theme
-      tg.setHeaderColor('#000000')
-      tg.setBackgroundColor('#000000')
+      // Set header color to match our dark theme (using correct API methods)
+      if ('setHeaderColor' in tg) {
+        (tg as any).setHeaderColor('#000000')
+      }
+      if ('setBackgroundColor' in tg) {
+        (tg as any).setBackgroundColor('#000000')
+      }
       
       console.log('Telegram Web App initialized:', {
         platform: tg.platform,

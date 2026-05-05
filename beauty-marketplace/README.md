@@ -210,9 +210,51 @@ const { colorScheme, themeParams } = useTelegram();
 
 ### Development Testing
 
-- **Outside Telegram**: App runs normally with fallback alerts
-- **In Telegram**: Full native integration with Telegram UI elements
-- **Console logs**: Check initialization status in browser console
+#### Option 1: Simple Dev Server
+```bash
+npm run dev
+```
+Then open http://localhost:5173 in your browser.
+
+#### Option 2: With Ngrok (for Telegram testing)
+```bash
+# Install ngrok if you haven't
+npx ngrok config add-authtoken YOUR_TOKEN
+
+# Start both Vite and ngrok together
+npm run start:local
+```
+
+This will:
+1. Start the Vite dev server on port 5173
+2. Create an ngrok tunnel to expose it publicly
+3. Display the ngrok URL for use in BotFather
+
+#### Option 3: Manual Ngrok
+```bash
+# Terminal 1: Start dev server
+npm run dev
+
+# Terminal 2: Start ngrok
+npx ngrok http 5173
+```
+
+### Local Setup with SQLite Backend
+
+For a complete local setup with backend:
+
+```bash
+# Start the backend server
+npm run server
+
+# Start the frontend
+npm run dev
+
+# Create ngrok tunnel (in another terminal)
+npx ngrok http 5173
+```
+
+Copy the ngrok URL and use it in your Telegram Bot configuration.
 
 ### Key Files for TMA
 

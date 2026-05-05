@@ -53,9 +53,11 @@ declare global {
         version: string;
         platform: string;
       };
-    };
+    } | undefined;
   }
 }
+
+export type TelegramWebApp = NonNullable<Window['Telegram']>['WebApp'];
 
 export interface TelegramUser {
   id: number;
@@ -66,7 +68,7 @@ export interface TelegramUser {
 }
 
 export interface UseTelegramReturn {
-  tg: Window['Telegram']['WebApp'] | null;
+  tg: TelegramWebApp | null;
   user: TelegramUser | null;
   themeParams: {
     bgColor?: string;
@@ -92,7 +94,7 @@ export interface UseTelegramReturn {
 }
 
 export function useTelegram(): UseTelegramReturn {
-  const [tg, setTg] = useState<Window['Telegram']['WebApp'] | null>(null);
+  const [tg, setTg] = useState<TelegramWebApp | null>(null);
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [themeParams, setThemeParams] = useState<{
     bgColor?: string;
@@ -145,10 +147,16 @@ export function useTelegram(): UseTelegramReturn {
       setColorScheme(webApp.colorScheme || 'dark');
       setPlatform(webApp.platform || 'unknown');
       
-      // Handle viewport changes
-      webApp.onEvent('viewportChanged', () => {
-        setIsExpanded(webApp.isExpanded);
-      });
+      // Handle viewport changes - using correct API
+      const handleViewportChange = () => {
+        // isExpanded is not directly available in older versions, assume true after expand()
+        setIsExpanded(true);
+      };
+      
+      // Try to subscribe if onEvent exists (newer API)
+      if ('onEvent' in webApp) {
+        (webApp as any).onEvent('viewportChanged', handleViewportChange);
+      }
     }
   }, []);
 

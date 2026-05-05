@@ -6,19 +6,16 @@ import { SearchBar } from '../components/SearchBar';
 import { BottomNav } from '../components/BottomNav';
 import { SpecialistProfile } from '../components/SpecialistProfile';
 import { ProOnboardingForm } from '../components/ProOnboardingForm';
-import { Specialist, CategoryType } from '@/types';
+import { Specialist } from '@/types';
 import { useTelegram } from '@/hooks/useTelegram';
 import { 
   Search, 
-  Calendar, 
-  User, 
   Sparkles, 
   Palette, 
   Scissors, 
   Star, 
-  MapPin,
-  ChevronRight,
-  Plus
+  Plus,
+  ChevronRight
 } from 'lucide-react';
 
 // Mock data
@@ -99,7 +96,7 @@ const CATEGORIES = [
 ];
 
 export default function Home() {
-  const { tg, user, colorScheme, showMainButton, hideMainButton, setMainButtonText, showAlert, showBackButton, hideBackButton } = useTelegram();
+  const { tg, user, showMainButton, hideMainButton, showAlert, showBackButton, hideBackButton } = useTelegram();
   const [activeTab, setActiveTab] = useState('search');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,7 +139,7 @@ export default function Home() {
 
   const handleBookService = (service: any) => {
     if (tg) {
-      tg.showConfirm(`Book ${service.name} for $${service.price}?`, (confirmed) => {
+      tg.showConfirm(`Book ${service.name} for $${service.price}?`, (confirmed: boolean) => {
         if (confirmed) {
           showAlert(`Booking confirmed: ${service.name}`);
         }

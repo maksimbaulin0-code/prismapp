@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Specialist, Service } from '@/types';
-import { ChevronLeft, X, Star, MapPin, Clock, DollarSign } from 'lucide-react';
+import { ChevronLeft, X, Star, MapPin, Clock } from 'lucide-react';
 
 interface SpecialistProfileProps {
   specialist: Specialist;
