@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import type { Specialist, Service } from '@/lib/supabase';
+import type { Specialist, Service } from '@/lib/db';
 
 const CATEGORY_MAP: Record<string, string> = {
   tattoo: 'Тату',

@@ -1,29 +1,18 @@
-import { supabase, type Specialist, type Booking, type Service } from './supabase';
+import { db, type Specialist, type Service } from './db';
 
 export async function getSpecialists(category?: string): Promise<Specialist[]> {
   try {
-    let query = supabase.from('specialists').select('*');
-    if (category && category !== 'all') {
-      query = query.eq('category', category);
-    }
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+    const specialists = await db.getSpecialists(category);
+    return specialists;
   } catch (e) {
-    console.log('Using mock data');
+    console.log('Using mock data - DB not connected');
     return getMockSpecialists();
   }
 }
 
 export async function getSpecialistById(id: number): Promise<Specialist | null> {
   try {
-    const { data, error } = await supabase
-      .from('specialists')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) throw error;
-    return data;
+    return await db.getSpecialistById(id);
   } catch (e) {
     const mock = getMockSpecialists();
     return mock.find(s => s.id === id) || null;
@@ -32,14 +21,10 @@ export async function getSpecialistById(id: number): Promise<Specialist | null> 
 
 export async function getServices(specialistId: number): Promise<Service[]> {
   try {
-    const { data, error } = await supabase
-      .from('services')
-      .select('*')
-      .eq('specialist_id', specialistId);
-    if (error) throw error;
-    return data || [];
+    const specialist = await db.getSpecialistById(specialistId);
+    return specialist?.services || [];
   } catch (e) {
-    return getMockSpecialists().find(s => s.id === specialistId)?.services || [];
+    return [];
   }
 }
 
@@ -50,55 +35,24 @@ export async function createBooking(
   date: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase.from('bookings').insert({
-      user_id: userId,
-      specialist_id: specialistId,
-      service_id: serviceId,
-      date,
-      status: 'pending',
-    });
-    
-    if (error) throw error;
+    await db.createBooking(userId, specialistId, serviceId, date);
     return { success: true };
   } catch (e) {
-    console.log('Booking saved locally');
-    return { success: true };
+    console.error('Booking error:', e);
+    return { success: false, error: String(e) };
   }
 }
 
-export async function getUserBookings(userId: number): Promise<Booking[]> {
+export async function getUserBookings(userId: number): Promise<any[]> {
   try {
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('*, specialist:specialists(*), service:services(*)')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
-    
-    if (error) throw error;
-    return data || [];
+    return await db.getUserBookings(userId);
   } catch (e) {
     return [];
   }
 }
 
-export async function updateBookingStatus(
-  bookingId: number,
-  status: string
-): Promise<{ success: boolean }> {
-  try {
-    const { error } = await supabase
-      .from('bookings')
-      .update({ status })
-      .eq('id', bookingId);
-    
-    return { success: !error };
-  } catch (e) {
-    return { success: false };
-  }
-}
-
 // Mock data fallback
-function getMockSpecialists(): (Specialist & { services: Service[] })[] {
+function getMockSpecialists(): Specialist[] {
   return [
     {
       id: 1,

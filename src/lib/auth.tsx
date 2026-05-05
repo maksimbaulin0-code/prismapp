@@ -1,5 +1,5 @@
 import { useEffect, useState, createContext, useContext } from 'react';
-import { supabase, type User } from './supabase';
+import { db, type User } from './db';
 
 interface AuthContextType {
   user: User | null;
@@ -19,36 +19,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkUser = async () => {
-    const stored = localStorage.getItem('telegram_user');
+    const stored = localStorage.getItem('prism_user');
     if (stored) {
       const params = JSON.parse(stored);
       if (params.telegram_id) {
         try {
-          const { data } = await supabase
-            .from('users')
-            .select('*')
-            .eq('telegram_id', params.telegram_id)
-            .single();
+          let existingUser = await db.getUser(params.telegram_id);
           
-          if (data) {
-            setUser(data);
-          } else {
-            const { data: newUser } = await supabase
-              .from('users')
-              .insert({
-                telegram_id: params.telegram_id,
-                name: params.name || 'Пользователь',
-              })
-              .select()
-              .single();
-            
-            if (newUser) {
-              setUser(newUser);
-              localStorage.setItem('telegram_user', JSON.stringify(newUser));
-            }
+          if (!existingUser) {
+            existingUser = await db.createUser(params.telegram_id, params.name || 'Пользователь');
+          }
+          
+          if (existingUser) {
+            setUser(existingUser);
           }
         } catch (e) {
-          console.log('Using offline mode');
+          console.log('Using local user');
+          setUser({
+            id: Date.now(),
+            telegram_id: params.telegram_id,
+            name: params.name,
+            phone: null,
+            created_at: new Date().toISOString(),
+          });
         }
       }
     }
@@ -57,33 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (telegramId: number, name?: string) => {
     try {
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('telegram_id', telegramId)
-        .single();
-
+      let existingUser = await db.getUser(telegramId);
+      
+      if (!existingUser) {
+        existingUser = await db.createUser(telegramId, name || 'Пользователь');
+      }
+      
       if (existingUser) {
         setUser(existingUser);
-        localStorage.setItem('telegram_user', JSON.stringify(existingUser));
-        return;
-      }
-
-      const { data: newUser } = await supabase
-        .from('users')
-        .insert({
-          telegram_id: telegramId,
-          name: name || 'Пользователь',
-        })
-        .select()
-        .single();
-
-      if (newUser) {
-        setUser(newUser);
-        localStorage.setItem('telegram_user', JSON.stringify(newUser));
+        localStorage.setItem('prism_user', JSON.stringify(existingUser));
       }
     } catch (e) {
-      console.log('Offline mode - user stored locally');
       const offlineUser = {
         id: Date.now(),
         telegram_id: telegramId,
@@ -92,13 +69,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         created_at: new Date().toISOString(),
       };
       setUser(offlineUser);
-      localStorage.setItem('telegram_user', JSON.stringify(offlineUser));
+      localStorage.setItem('prism_user', JSON.stringify(offlineUser));
     }
   };
 
   const signOut = async () => {
     setUser(null);
-    localStorage.removeItem('telegram_user');
+    localStorage.removeItem('prism_user');
   };
 
   return (

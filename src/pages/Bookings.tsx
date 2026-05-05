@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../lib/auth';
 import { getUserBookings } from '../lib/api';
-import { Booking } from '../lib/supabase';
+import { Booking } from '../lib/db';
 
 interface BookingsProps {
   activeTab: string;

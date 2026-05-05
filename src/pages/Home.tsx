@@ -7,7 +7,7 @@ import { CategoryScroll } from '../components/CategoryScroll';
 import { SearchBar } from '../components/SearchBar';
 import { SpecialistProfile } from '../components/SpecialistProfile';
 import { ProOnboardingForm } from '../components/ProOnboardingForm';
-import type { Specialist, Service } from '../lib/supabase';
+import type { Specialist, Service } from '../lib/db';
 
 const CATEGORIES = [
   { id: 'all', name: 'Все', icon: '🔍' },
