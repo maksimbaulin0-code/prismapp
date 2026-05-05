@@ -142,21 +142,94 @@ npm run preview  # Preview production build
 
 ## Telegram Mini App Integration
 
-To integrate with Telegram:
+### Setup Complete ✅
 
-1. Include Telegram Web App SDK:
-```html
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-```
+The app is fully integrated with Telegram Web App SDK:
 
-2. Initialize in your app:
+1. **SDK Included**: The Telegram Web App script is loaded in `index.html`
+2. **Initialization**: `main.tsx` initializes the TMA with proper setup (expand, theme colors)
+3. **Custom Hook**: `useTelegram()` hook provides easy access to all TMA features
+
+### Features Implemented
+
+#### 1. User Data Access
 ```typescript
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+const { user } = useTelegram();
+// Access: user.firstName, user.username, user.id, etc.
 ```
 
-3. Use Telegram theme params for adaptive colors
+#### 2. Main Button (for booking)
+```typescript
+const { showMainButton, hideMainButton } = useTelegram();
+
+showMainButton('Book Now', () => {
+  // Handle booking
+});
+```
+
+#### 3. Back Button
+```typescript
+const { showBackButton, hideBackButton } = useTelegram();
+
+showBackButton(() => {
+  // Navigate back
+});
+```
+
+#### 4. Native Alerts/Confirms
+```typescript
+const { showAlert, showConfirm } = useTelegram();
+
+showAlert('Message');
+const confirmed = await showConfirm('Are you sure?');
+```
+
+#### 5. Theme Integration
+```typescript
+const { colorScheme, themeParams } = useTelegram();
+// Automatically adapts to user's Telegram theme
+```
+
+### Deployment to Telegram
+
+1. **Build the app**:
+   ```bash
+   npm run build
+   ```
+
+2. **Host the build** on any HTTPS server (Vercel, Netlify, GitHub Pages, or your own server)
+
+3. **Create a bot** via [@BotFather](https://t.me/BotFather):
+   - `/newbot` - create a new bot
+   - `/newapp` - create a new Mini App
+   - Provide the HTTPS URL to your hosted build
+
+4. **Get your Mini App link**:
+   - Direct link: `https://t.me/your_bot/app_name`
+   - Or add to menu via BotFather
+
+### Development Testing
+
+- **Outside Telegram**: App runs normally with fallback alerts
+- **In Telegram**: Full native integration with Telegram UI elements
+- **Console logs**: Check initialization status in browser console
+
+### Key Files for TMA
+
+| File | Purpose |
+|------|---------|
+| `index.html` | Loads Telegram Web App SDK |
+| `src/main.tsx` | Initializes TMA on app start |
+| `src/hooks/useTelegram.ts` | Custom hook for all TMA features |
+| `src/pages/Home.tsx` | Uses TMA buttons and user data |
+
+### Best Practices
+
+1. **Always check if running inside Telegram**: `if (tg) { ... }`
+2. **Use native buttons** for primary actions (booking, confirmation)
+3. **Respect user's theme** - the app uses dark mode by default but can adapt
+4. **Expand viewport** - done automatically on init for full-screen experience
+5. **Handle back navigation** - use Telegram's BackButton for consistent UX
 
 ## License
 

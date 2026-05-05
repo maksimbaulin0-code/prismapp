@@ -5,46 +5,43 @@ node_modules/
 # Build outputs
 dist/
 build/
-coverage/
+*.js.map
+*.ts.map
 
 # Environment variables
 .env
 .env.local
-.env.*
+*.env.*
 
-# IDE specific
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
+*.tmp
 
 # Logs
 *.log
 
-# Python related (if any Python files exist in project)
+# Python related (if any Python files exist in the project)
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-*.so
 
-# Temporary files
-*.tmp
-*.temp
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Distribution / packaging
+*.tar.gz
+*.zip
+*.tgz
+*.tar
+*.gz
 
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# Testing
-.coverage
-htmlcov/
-
-# Vite specific
-!.vite/
-vite.config.ts
-
-# TypeScript/JavaScript build artifacts
-*.tsbuildinfo
 ```

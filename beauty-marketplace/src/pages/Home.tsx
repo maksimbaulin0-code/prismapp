@@ -7,6 +7,7 @@ import { BottomNav } from './BottomNav';
 import { SpecialistProfile } from './SpecialistProfile';
 import { ProOnboardingForm } from './ProOnboardingForm';
 import { Specialist, CategoryType } from '@/types';
+import { useTelegram } from '@/hooks/useTelegram';
 
 // Mock data
 const MOCK_SPECIALISTS: Specialist[] = [
@@ -86,6 +87,7 @@ const CATEGORIES = [
 ];
 
 export default function Home() {
+  const { tg, user, colorScheme, showMainButton, hideMainButton, setMainButtonText, showAlert, showBackButton, hideBackButton } = useTelegram();
   const [activeTab, setActiveTab] = useState('search');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,6 +102,24 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Telegram Main Button for booking
+  useEffect(() => {
+    if (selectedSpecialist) {
+      showMainButton('Book Now', () => {
+        showAlert(`Booking request sent to ${selectedSpecialist.name}!`);
+      });
+      showBackButton(() => setSelectedSpecialist(null));
+    } else {
+      hideMainButton();
+      hideBackButton();
+    }
+
+    return () => {
+      hideMainButton();
+      hideBackButton();
+    };
+  }, [selectedSpecialist, showMainButton, hideMainButton, showAlert, showBackButton, hideBackButton]);
+
   // Debounced search filtering
   const filteredSpecialists = MOCK_SPECIALISTS.filter((specialist) => {
     const matchesCategory = selectedCategory === 'all' || specialist.category === selectedCategory;
@@ -109,13 +129,24 @@ export default function Home() {
   });
 
   const handleBookService = (service: any) => {
-    alert(`Booking ${service.name} for $${service.price}`);
+    if (tg) {
+      tg.showConfirm(`Book ${service.name} for $${service.price}?`, (confirmed) => {
+        if (confirmed) {
+          showAlert(`Booking confirmed: ${service.name}`);
+        }
+      });
+    } else {
+      alert(`Booking ${service.name} for $${service.price}`);
+    }
   };
 
   const handleProOnboardingComplete = (data: any) => {
     console.log('Pro profile created:', data);
     setShowProOnboarding(false);
     setIsProMode(true);
+    if (tg) {
+      showAlert('Your Pro profile has been created successfully!');
+    }
   };
 
   if (showProOnboarding) {
@@ -142,7 +173,10 @@ export default function Home() {
       {/* Header */}
       <header className="sticky top-0 glass border-b border-border px-4 py-4 z-10">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold tracking-tight">BeautyFind</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            BeautyFind
+            {user && <span className="text-xs font-normal text-gray-400 ml-2">Hi, {user.firstName}!</span>}
+          </h1>
           <button
             onClick={() => setIsProMode(!isProMode)}
             className="px-3 py-1.5 text-xs font-medium border border-border rounded-sharp hover:bg-white/5 transition-colors"
