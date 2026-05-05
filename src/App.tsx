@@ -4,6 +4,7 @@ import { useAuth } from './lib/auth';
 import Home from './pages/Home';
 import Bookings from './pages/Bookings';
 import Profile from './pages/Profile';
+import Welcome from './pages/Welcome';
 
 declare global {
   interface Window {
@@ -20,7 +21,6 @@ declare global {
         };
         ready: () => void;
         close: () => void;
-        themeParams: Record<string, string>;
       };
     };
   }
@@ -28,14 +28,13 @@ declare global {
 
 function App() {
   const [activeTab, setActiveTab] = useState('search');
-  const { loading, signIn } = useAuth();
+  const { user, loading, signIn } = useAuth();
 
   useEffect(() => {
-    // Инициализация Telegram Web App
+    // Telegram Web App initialization
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       
-      // Авторизация через Telegram
       const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
       if (tgUser?.id) {
         const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
@@ -43,6 +42,19 @@ function App() {
       }
     }
   }, [signIn]);
+
+  // Show welcome for new users
+  if (!loading && !user) {
+    return <Welcome />;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-accent">Загрузка...</div>
+      </div>
+    );
+  }
 
   const renderPage = () => {
     switch (activeTab) {
@@ -54,14 +66,6 @@ function App() {
         return <Home activeTab={activeTab} onTabChange={setActiveTab} />;
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-accent">Загрузка...</div>
-      </div>
-    );
-  }
 
   return (
     <AnimatePresence mode="wait">
