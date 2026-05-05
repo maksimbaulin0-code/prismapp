@@ -6,7 +6,7 @@ import { SearchBar } from '../components/SearchBar';
 import { BottomNav } from '../components/BottomNav';
 import { SpecialistProfile } from '../components/SpecialistProfile';
 import { ProOnboardingForm } from '../components/ProOnboardingForm';
-import { Specialist, CategoryType } from '@/types';
+import { Specialist } from '@/types';
 
 // Mock data
 const MOCK_SPECIALISTS: Specialist[] = [
