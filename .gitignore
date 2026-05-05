@@ -5,46 +5,46 @@ node_modules/
 # Build outputs
 dist/
 build/
-coverage/
+*.tsbuildinfo
 
 # Environment variables
 .env
 .env.local
-.env.*
+*.env.*
 
-# IDE specific
-.vscode/
-.idea/
-*.swp
-*.swo
+# Database
+data/marketplace.db
 
 # Logs
 *.log
 
-# Python related (if any Python files exist in project)
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python (if any Python files exist in the project)
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
 *.so
-
-# Temporary files
-*.tmp
-*.temp
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Testing
-.coverage
-htmlcov/
-
-# Vite specific
-!.vite/
-vite.config.ts
-
-# TypeScript/JavaScript build artifacts
-*.tsbuildinfo
+.Python
 ```
