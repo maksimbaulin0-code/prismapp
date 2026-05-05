@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -12,15 +12,16 @@ export interface ProProfileData {
   bio: string;
   categories: string[];
   services: { name: string; price: number; duration: number }[];
+  portfolio: string[];
 }
 
 const CATEGORIES = [
-  { id: 'tattoo', name: 'Tattoo', icon: '🎨' },
-  { id: 'nails', name: 'Nails', icon: '💅' },
-  { id: 'piercing', name: 'Piercing', icon: '✨' },
-  { id: 'makeup', name: 'Makeup', icon: '💄' },
-  { id: 'hair', name: 'Hair', icon: '💇' },
-  { id: 'lashes', name: 'Lashes', icon: '👁️' },
+  { id: 'tattoo', name: 'Тату', icon: '🎨' },
+  { id: 'nails', name: 'Ногти', icon: '💅' },
+  { id: 'piercing', name: 'Пирсинг', icon: '✨' },
+  { id: 'makeup', name: 'Макияж', icon: '💄' },
+  { id: 'hair', name: 'Волосы', icon: '💇' },
+  { id: 'lashes', name: 'Ресницы', icon: '👁️' },
 ];
 
 export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormProps) {
@@ -30,8 +31,11 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
     bio: '',
     categories: [],
     services: [],
+    portfolio: [],
   });
   const [newService, setNewService] = useState({ name: '', price: '', duration: '' });
+  const [errors, setErrors] = useState<{ name?: string; price?: string; duration?: string }>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalSteps = 4;
 
@@ -55,26 +59,63 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
   };
 
   const addService = () => {
-    if (newService.name && newService.price && newService.duration) {
-      setFormData((prev) => ({
-        ...prev,
-        services: [
-          ...prev.services,
-          {
-            name: newService.name,
-            price: parseFloat(newService.price),
-            duration: parseInt(newService.duration),
-          },
-        ],
-      }));
-      setNewService({ name: '', price: '', duration: '' });
+    setErrors({});
+    const name = newService.name.trim();
+    const price = parseFloat(newService.price);
+    const duration = parseInt(newService.duration);
+    
+    if (!name) {
+      setErrors({ name: 'Введите название' });
+      return;
     }
+    if (!price || price <= 0) {
+      setErrors({ price: 'Введите цену' });
+      return;
+    }
+    if (!duration || duration <= 0) {
+      setErrors({ duration: 'Введите длительность' });
+      return;
+    }
+    
+    setFormData((prev) => ({
+      ...prev,
+      services: [...prev.services, { name, price, duration }],
+    }));
+    setNewService({ name: '', price: '', duration: '' });
   };
 
   const removeService = (index: number) => {
     setFormData((prev) => ({
       ...prev,
       services: prev.services.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Файл слишком большой (макс 5МБ)');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setFormData((prev) => ({
+          ...prev,
+          portfolio: [...prev.portfolio, ev.target?.result as string],
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removePhoto = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      portfolio: prev.portfolio.filter((_, i) => i !== index),
     }));
   };
 
@@ -85,7 +126,6 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-background z-50 overflow-y-auto"
     >
-      {/* Header */}
       <div className="sticky top-0 glass border-b border-border px-4 py-4">
         <div className="flex items-center justify-between mb-4">
           <button onClick={handleBack} className="p-2 hover:bg-white/10 rounded-sharp">
@@ -93,52 +133,43 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h2 className="text-lg font-semibold">Create Pro Profile</h2>
-          <div className="w-9" /> {/* Spacer for alignment */}
+          <h2 className="text-lg font-semibold">Регистрация мастера</h2>
+          <div className="w-9" />
         </div>
 
-        {/* Progress Bar */}
         <div className="relative h-1 bg-border rounded-full overflow-hidden">
           <motion.div
             className="absolute left-0 top-0 h-full bg-accent"
             initial={{ width: 0 }}
             animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
-            transition={{ duration: 0.3 }}
           />
         </div>
-        <p className="text-xs text-gray-400 mt-2">Step {step + 1} of {totalSteps}</p>
+        <p className="text-xs text-gray-400 mt-2">Шаг {step + 1} из {totalSteps}</p>
       </div>
 
-      {/* Form Content */}
       <div className="px-4 py-6 pb-32">
         <AnimatePresence mode="wait">
           {step === 0 && (
-            <motion.div
-              key="step-0"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              <h3 className="text-xl font-semibold mb-4">Basic Information</h3>
+            <motion.div key="step-0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+              <h3 className="text-xl font-semibold mb-4">Основная информация</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Your Name / Studio Name</label>
+                  <label className="block text-sm text-gray-400 mb-2">Ваше имя / Название студии</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-card border border-border rounded-soft outline-none focus:border-white/30 transition-colors"
-                    placeholder="Enter name"
+                    className="w-full px-4 py-3 bg-card border border-border rounded-soft outline-none focus:border-white/30"
+                    placeholder="Введите имя"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Bio</label>
+                  <label className="block text-sm text-gray-400 mb-2">О себе</label>
                   <textarea
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    className="w-full px-4 py-3 bg-card border border-border rounded-soft outline-none focus:border-white/30 transition-colors resize-none"
-                    placeholder="Tell clients about yourself..."
+                    className="w-full px-4 py-3 bg-card border border-border rounded-soft outline-none focus:border-white/30 resize-none"
+                    placeholder="Расскажите о себе..."
                     rows={4}
                   />
                 </div>
@@ -147,15 +178,9 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
           )}
 
           {step === 1 && (
-            <motion.div
-              key="step-1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              <h3 className="text-xl font-semibold mb-4">Select Categories</h3>
-              <p className="text-sm text-gray-400 mb-4">Choose all that apply</p>
+            <motion.div key="step-1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+              <h3 className="text-xl font-semibold mb-4">Выберите категории</h3>
+              <p className="text-sm text-gray-400 mb-4">Выберите все подходящие варианты</p>
               <div className="grid grid-cols-2 gap-3">
                 {CATEGORIES.map((cat) => (
                   <motion.button
@@ -163,7 +188,7 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
                     whileTap={{ scale: 0.98 }}
                     onClick={() => toggleCategory(cat.id)}
                     className={cn(
-                      'p-4 rounded-soft border flex flex-col items-center gap-2 transition-all',
+                      'p-4 rounded-soft border flex flex-col items-center gap-2',
                       formData.categories.includes(cat.id)
                         ? 'bg-accent text-background border-accent'
                         : 'bg-card text-gray-400 border-border hover:border-white/20'
@@ -178,49 +203,57 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
           )}
 
           {step === 2 && (
-            <motion.div
-              key="step-2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              <h3 className="text-xl font-semibold mb-4">Add Services</h3>
+            <motion.div key="step-2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+              <h3 className="text-xl font-semibold mb-4">Добавьте услуги</h3>
               
-              {/* Service Input */}
               <div className="glass p-4 rounded-soft space-y-3">
                 <input
                   type="text"
                   value={newService.name}
                   onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-                  placeholder="Service name (e.g., Gel Manicure)"
-                  className="w-full px-3 py-2 bg-card border border-border rounded-sharp outline-none text-sm"
+                  placeholder="Название услуги"
+                  className={cn(
+                    'w-full px-3 py-2 bg-card border border-border rounded-sharp outline-none text-sm',
+                    errors.name && 'border-red-500'
+                  )}
                 />
+                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
                 <div className="flex gap-3">
-                  <input
-                    type="number"
-                    value={newService.price}
-                    onChange={(e) => setNewService({ ...newService, price: e.target.value })}
-                    placeholder="Price ($)"
-                    className="flex-1 px-3 py-2 bg-card border border-border rounded-sharp outline-none text-sm"
-                  />
-                  <input
-                    type="number"
-                    value={newService.duration}
-                    onChange={(e) => setNewService({ ...newService, duration: e.target.value })}
-                    placeholder="Duration (min)"
-                    className="flex-1 px-3 py-2 bg-card border border-border rounded-sharp outline-none text-sm"
-                  />
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      value={newService.price}
+                      onChange={(e) => setNewService({ ...newService, price: e.target.value })}
+                      placeholder="Цена (₽)"
+                      className={cn(
+                        'w-full px-3 py-2 bg-card border border-border rounded-sharp outline-none text-sm',
+                        errors.price && 'border-red-500'
+                      )}
+                    />
+                    {errors.price && <p className="text-xs text-red-500">{errors.price}</p>}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      value={newService.duration}
+                      onChange={(e) => setNewService({ ...newService, duration: e.target.value })}
+                      placeholder="Минуты"
+                      className={cn(
+                        'w-full px-3 py-2 bg-card border border-border rounded-sharp outline-none text-sm',
+                        errors.duration && 'border-red-500'
+                      )}
+                    />
+                    {errors.duration && <p className="text-xs text-red-500">{errors.duration}</p>}
+                  </div>
                 </div>
                 <button
                   onClick={addService}
-                  className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-sharp text-sm font-medium transition-colors"
+                  className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-sharp text-sm font-medium"
                 >
-                  Add Service
+                  Добавить услугу
                 </button>
               </div>
 
-              {/* Service List */}
               {formData.services.length > 0 && (
                 <div className="space-y-2">
                   {formData.services.map((service, index) => (
@@ -232,13 +265,11 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
                     >
                       <div>
                         <p className="font-medium">{service.name}</p>
-                        <p className="text-xs text-gray-400">
-                          ${service.price} • {service.duration} min
-                        </p>
+                        <p className="text-xs text-gray-400">{service.price}₽ • {service.duration} мин</p>
                       </div>
                       <button
                         onClick={() => removeService(index)}
-                        className="p-2 hover:bg-red-500/20 rounded-sharp transition-colors"
+                        className="p-2 hover:bg-red-500/20 rounded-sharp"
                       >
                         <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -252,17 +283,20 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
           )}
 
           {step === 3 && (
-            <motion.div
-              key="step-3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              <h3 className="text-xl font-semibold mb-4">Portfolio</h3>
+            <motion.div key="step-3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+              <h3 className="text-xl font-semibold mb-4">Портфолио</h3>
               
-              {/* Photo Upload Zone */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePhotoUpload}
+                accept="image/jpeg,image/png"
+                multiple
+                className="hidden"
+              />
+              
               <motion.div
+                onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-border rounded-soft p-8 text-center hover:border-white/30 transition-colors cursor-pointer"
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
@@ -272,19 +306,36 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <div>
-                    <p className="font-medium">Drop photos here or click to upload</p>
-                    <p className="text-xs text-gray-500 mt-1">Support for JPG, PNG (max 5MB)</p>
+                    <p className="font-medium">Нажмите или перетащите фото</p>
+                    <p className="text-xs text-gray-500 mt-1">JPG, PNG до 5МБ</p>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Summary */}
+              {formData.portfolio.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {formData.portfolio.map((photo, index) => (
+                    <div key={index} className="relative aspect-square rounded-soft overflow-hidden">
+                      <img src={photo} alt="" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 p-1 bg-black/50 rounded-full"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="glass p-4 rounded-soft space-y-3 mt-6">
-                <h4 className="font-semibold">Profile Summary</h4>
+                <h4 className="font-semibold">Итого</h4>
                 <div className="text-sm text-gray-400 space-y-1">
-                  <p><span className="text-accent">Name:</span> {formData.name || 'Not set'}</p>
-                  <p><span className="text-accent">Categories:</span> {formData.categories.length} selected</p>
-                  <p><span className="text-accent">Services:</span> {formData.services.length} added</p>
+                  <p><span className="text-accent">Имя:</span> {formData.name || 'Не задано'}</p>
+                  <p><span className="text-accent">Категории:</span> {formData.categories.length} выбрано</p>
+                  <p><span className="text-accent">Услуги:</span> {formData.services.length} добавлено</p>
                 </div>
               </div>
             </motion.div>
@@ -292,23 +343,20 @@ export function ProOnboardingForm({ onComplete, onCancel }: ProOnboardingFormPro
         </AnimatePresence>
       </div>
 
-      {/* Action Buttons */}
       <div className="fixed bottom-0 left-0 right-0 glass border-t border-border p-4 safe-area-bottom">
         <div className="flex gap-3">
-          {step > 0 && (
-            <button
-              onClick={handleBack}
-              className="flex-1 py-3 border border-border rounded-soft font-medium hover:bg-white/5 transition-colors"
-            >
-              Back
-            </button>
-          )}
+          <button
+            onClick={handleBack}
+            className="flex-1 py-3 border border-border rounded-soft font-medium hover:bg-white/5"
+          >
+            Назад
+          </button>
           <button
             onClick={handleNext}
             disabled={step === 0 && !formData.name}
-            className="flex-1 py-3 bg-accent text-background rounded-soft font-semibold hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-3 bg-accent text-background rounded-soft font-semibold hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {step === totalSteps - 1 ? 'Complete' : 'Continue'}
+            {step === totalSteps - 1 ? 'Готово' : 'Далее'}
           </button>
         </div>
       </div>

@@ -1,10 +1,34 @@
-import { AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Home from './pages/Home';
+import Bookings from './pages/Bookings';
+import Profile from './pages/Profile';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('search');
+
+  const renderPage = () => {
+    switch (activeTab) {
+      case 'bookings':
+        return <Bookings />;
+      case 'profile':
+        return <Profile />;
+      default:
+        return <Home activeTab={activeTab} onTabChange={setActiveTab} />;
+    }
+  };
+
   return (
     <AnimatePresence mode="wait">
-      <Home />
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="min-h-screen"
+      >
+        {renderPage()}
+      </motion.div>
     </AnimatePresence>
   );
 }
