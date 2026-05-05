@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SpecialistCard, SpecialistCardSkeleton } from './SpecialistCard';
-import { CategoryScroll } from './CategoryScroll';
-import { SearchBar } from './SearchBar';
-import { BottomNav } from './BottomNav';
-import { SpecialistProfile } from './SpecialistProfile';
-import { ProOnboardingForm } from './ProOnboardingForm';
+import { SpecialistCard, SpecialistCardSkeleton } from '../components/SpecialistCard';
+import { CategoryScroll } from '../components/CategoryScroll';
+import { SearchBar } from '../components/SearchBar';
+import { BottomNav } from '../components/BottomNav';
+import { SpecialistProfile } from '../components/SpecialistProfile';
+import { ProOnboardingForm } from '../components/ProOnboardingForm';
 import { Specialist, CategoryType } from '@/types';
 
 // Mock data
