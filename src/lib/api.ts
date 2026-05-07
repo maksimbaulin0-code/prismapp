@@ -9,6 +9,7 @@ export interface Specialist {
   review_count: number;
   location: string | null;
   image_url: string | null;
+  portfolio?: string[];
   services?: Service[];
 }
 

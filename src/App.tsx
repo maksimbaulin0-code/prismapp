@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from './lib/auth';
+import { BottomNav } from './components/BottomNav';
 import Home from './pages/Home';
 import Bookings from './pages/Bookings';
 import Profile from './pages/Profile';
@@ -10,31 +11,26 @@ declare global {
   interface Window {
     Telegram?: {
       WebApp: {
-        initData: string;
         initDataUnsafe: {
           user?: {
             id: number;
             first_name: string;
             last_name?: string;
-            username?: string;
           };
         };
         ready: () => void;
-        close: () => void;
       };
     };
   }
 }
 
-function App() {
+export default function App() {
   const [activeTab, setActiveTab] = useState('search');
   const { user, loading, signIn } = useAuth();
 
   useEffect(() => {
-    // Telegram Web App initialization
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
-      
       const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
       if (tgUser?.id) {
         const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
@@ -43,43 +39,44 @@ function App() {
     }
   }, [signIn]);
 
-  // Show welcome for new users
-  if (!loading && !user) {
-    return <Welcome />;
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-accent">Загрузка...</div>
+        <div className="text-accent animate-pulse">Загрузка...</div>
       </div>
     );
+  }
+
+  if (!user) {
+    return <Welcome />;
   }
 
   const renderPage = () => {
     switch (activeTab) {
       case 'bookings':
-        return <Bookings activeTab={activeTab} onTabChange={setActiveTab} />;
+        return <Bookings />;
       case 'profile':
-        return <Profile activeTab={activeTab} onTabChange={setActiveTab} />;
+        return <Profile />;
       default:
-        return <Home activeTab={activeTab} onTabChange={setActiveTab} />;
+        return <Home />;
     }
   };
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="min-h-screen"
-      >
-        {renderPage()}
-      </motion.div>
-    </AnimatePresence>
+    <div className="min-h-screen bg-background text-white">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+          className="min-h-screen pb-20"
+        >
+          {renderPage()}
+        </motion.div>
+      </AnimatePresence>
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+    </div>
   );
 }
-
-export default App;

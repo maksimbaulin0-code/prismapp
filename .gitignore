@@ -34,3 +34,7 @@ htmlcov/
 
 # TypeScript/JavaScript build artifacts
 *.tsbuildinfo
+
+# Databases
+*.db
+*.db.backup

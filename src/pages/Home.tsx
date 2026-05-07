@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../lib/auth';
 import { getSpecialists as fetchSpecialists, getSpecialistById } from '../lib/api';
@@ -19,24 +19,26 @@ const CATEGORIES = [
   { id: 'lashes', name: 'Ресницы', icon: '👁️' },
 ];
 
-interface HomeProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}
-
 interface SpecialistWithServices extends Specialist {
   services?: Service[];
 }
 
-export default function Home({ activeTab, onTabChange }: HomeProps) {
+export default function Home() {
   const { user } = useAuth();
   const [specialists, setSpecialists] = useState<SpecialistWithServices[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSpecialist, setSelectedSpecialist] = useState<SpecialistWithServices | null>(null);
   const [showProOnboarding, setShowProOnboarding] = useState(false);
   const [isProMode, setIsProMode] = useState(false);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     loadSpecialists();
@@ -49,25 +51,24 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
     setIsLoading(false);
   };
 
-  const filteredSpecialists = specialists.filter((specialist) => {
-    const matchesSearch = !searchQuery || 
-      specialist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (specialist.bio?.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesSearch;
-  });
+  const filteredSpecialists = useMemo(() => {
+    if (!debouncedQuery) return specialists;
+    const q = debouncedQuery.toLowerCase();
+    return specialists.filter((s) =>
+      s.name.toLowerCase().includes(q) ||
+      (s.bio?.toLowerCase().includes(q) ?? false)
+    );
+  }, [specialists, debouncedQuery]);
 
-  const handleBookService = async (serviceId: number) => {
+  const handleBookService = async (service: Service) => {
     if (!user || !selectedSpecialist) {
-      alert('Сначала войдите через Telegram');
+      alert('Сначала войдите');
       return;
     }
-    
     const { createBooking } = await import('../lib/api');
-    const date = new Date().toISOString();
-    const result = await createBooking(user.id, selectedSpecialist.id, serviceId, date);
-    
+    const result = await createBooking(user.id, selectedSpecialist.id, service.id, new Date().toISOString());
     if (result.success) {
-      alert('Бронирование создано!');
+      alert(`Бронирование ${service.name} создано!`);
       setSelectedSpecialist(null);
     } else {
       alert('Ошибка: ' + result.error);
@@ -79,42 +80,50 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
     setSelectedSpecialist(fullData as SpecialistWithServices);
   };
 
+  const toggleProMode = () => {
+    setIsProMode((prev) => {
+      const next = !prev;
+      if (!next) setShowProOnboarding(false);
+      return next;
+    });
+  };
+
+  // Overlay: Pro Onboarding
   if (showProOnboarding) {
     return (
       <ProOnboardingForm
         onComplete={(data) => {
-          console.log('Pro profile created:', data);
+          console.log('Pro profile:', data);
           setShowProOnboarding(false);
-          setIsProMode(true);
         }}
         onCancel={() => setShowProOnboarding(false)}
       />
     );
   }
 
+  // Overlay: Specialist Profile
   if (selectedSpecialist) {
     return (
       <SpecialistProfile
         specialist={selectedSpecialist}
         onBack={() => setSelectedSpecialist(null)}
-        onBook={(service) => handleBookService(service.id)}
+        onBook={handleBookService}
       />
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 glass border-b border-border px-4 py-4 z-10">
-        <div className="flex items-center justify-between mb-2">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-30 glass border-b border-border px-4 py-4">
+        <div className="flex items-center justify-between mb-3">
           <h1 className="text-2xl font-bold tracking-tight">BeautyFind</h1>
           <button
-            onClick={() => setIsProMode(!isProMode)}
-            className="px-3 py-1.5 text-xs font-medium border border-border rounded-sharp hover:bg-white/5"
+            onClick={toggleProMode}
+            className="px-3 py-1.5 text-xs font-medium border border-border rounded-sharp hover:bg-white/5 transition-colors"
           >
             {isProMode ? 'Клиент' : 'Мастер'}
           </button>
         </div>
-        
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
       </header>
 
@@ -129,29 +138,41 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
           <h2 className="text-lg font-semibold">
             {isProMode ? 'Ваш кабинет' : 'Популярные мастера'}
           </h2>
-          {!isProMode && user && (
+          {isProMode ? (
+            <button
+              onClick={() => setShowProOnboarding(true)}
+              className="text-xs text-gray-400 hover:text-accent transition-colors"
+            >
+              Редактировать →
+            </button>
+          ) : user ? (
             <button
               onClick={() => {
-                if (user) {
-                  setIsProMode(true);
-                  setShowProOnboarding(true);
-                }
+                setIsProMode(true);
+                setShowProOnboarding(true);
               }}
-              className="text-xs text-gray-400 hover:text-accent"
+              className="text-xs text-gray-400 hover:text-accent transition-colors"
             >
               Стать мастером →
             </button>
-          )}
+          ) : null}
         </div>
 
         {isProMode ? (
-          <ProOnboardingForm
-            onComplete={async (data) => {
-              console.log('Pro profile:', data);
-              setShowProOnboarding(false);
-            }}
-            onCancel={() => setShowProOnboarding(false)}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass p-6 rounded-soft text-center"
+          >
+            <h3 className="font-semibold mb-2">Добро пожаловать в кабинет</h3>
+            <p className="text-sm text-gray-400 mb-4">Управляйте записями и услугами</p>
+            <button
+              onClick={() => setShowProOnboarding(true)}
+              className="px-4 py-2 bg-accent text-background rounded-soft text-sm font-semibold"
+            >
+              Настроить профиль
+            </button>
+          </motion.div>
         ) : isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -183,69 +204,13 @@ export default function Home({ activeTab, onTabChange }: HomeProps) {
                   className="text-center py-12 text-gray-400"
                 >
                   <p>Мастера не найдены</p>
+                  <p className="text-sm mt-1">Попробуйте изменить фильтры</p>
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
         )}
       </section>
-
-      <div className="fixed bottom-0 left-0 right-0 glass border-t border-border safe-area-bottom">
-        <div className="flex justify-around items-center py-2 px-4">
-          {[
-            { id: 'search', label: 'Поиск', icon: SearchIcon },
-            { id: 'bookings', label: 'Брони', icon: CalendarIcon },
-            { id: 'profile', label: 'Профиль', icon: UserIcon },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            
-            return (
-              <motion.button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className="relative flex flex-col items-center gap-1 p-2 min-w-[64px]"
-                whileTap={{ scale: 0.9 }}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="active-indicator"
-                    className="absolute -top-1 w-8 h-1 bg-accent rounded-full"
-                  />
-                )}
-                <Icon className={`w-5 h-5 ${isActive ? 'text-accent' : 'text-gray-500'}`} />
-                <span className={`text-xs font-medium ${isActive ? 'text-accent' : 'text-gray-500'}`}>
-                  {tab.label}
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
-      </div>
     </div>
-  );
-}
-
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  );
-}
-
-function CalendarIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-  );
-}
-
-function UserIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
   );
 }

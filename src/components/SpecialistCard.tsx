@@ -18,12 +18,12 @@ interface SpecialistCardProps {
   review_count: number;
   location: string | null;
   image_url: string | null;
-  bio?: string | null;
   index?: number;
   onClick?: () => void;
 }
 
 export function SpecialistCard({
+  id,
   name,
   category,
   rating,
@@ -33,10 +33,9 @@ export function SpecialistCard({
   index = 0,
   onClick,
 }: SpecialistCardProps) {
-  // bio is available but not displayed in card view
   return (
     <motion.div
-      layoutId={`card-${name}`}
+      layoutId={`specialist-card-${id}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -55,7 +54,10 @@ export function SpecialistCard({
       )}
       onClick={onClick}
     >
-      <div className="relative h-48 w-full overflow-hidden">
+      <motion.div
+        layoutId={`specialist-image-${id}`}
+        className="relative h-48 w-full overflow-hidden"
+      >
         <img
           src={image_url || 'https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=400'}
           alt={name}
@@ -71,12 +73,15 @@ export function SpecialistCard({
           <span className="text-accent">★</span>
           <span className="text-xs font-semibold">{rating}</span>
         </div>
-      </div>
+      </motion.div>
 
       <div className="p-4 space-y-2">
-        <h3 className="text-lg font-semibold text-accent tracking-tight">
+        <motion.h3
+          layoutId={`specialist-name-${id}`}
+          className="text-lg font-semibold text-accent tracking-tight"
+        >
           {name}
-        </h3>
+        </motion.h3>
         
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <span>{location || 'Москва'}</span>
