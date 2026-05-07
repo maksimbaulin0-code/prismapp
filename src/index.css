@@ -12,12 +12,13 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: #000000;
+  background: #000000;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-/* Custom scrollbar for horizontal category scroll */
+/* Custom scrollbar */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -27,36 +28,157 @@ body {
   scrollbar-width: none;
 }
 
-/* Glassmorphism utility */
+/* Enhanced Glassmorphism */
 .glass {
-  background: rgba(10, 10, 10, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(26, 26, 26, 0.5);
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Skeleton loader animation */
+/* Gradient borders */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Enhanced Skeleton */
 .skeleton-loader {
   background: linear-gradient(
     90deg,
-    #111111 0%,
-    #181818 50%,
-    #111111 100%
+    #0a0a0a 0%,
+    #1a1a1a 50%,
+    #0a0a0a 100%
   );
   background-size: 200% 100%;
   animation: skeleton 1.5s ease-in-out infinite;
 }
 
 @keyframes skeleton {
-  0% {
-    background-position: -200% 0;
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Glow effects */
+.glow-active {
+  box-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(255, 255, 255, 0.05);
+}
+
+.glow-strong {
+  box-shadow: 
+    0 0 30px rgba(255, 255, 255, 0.15),
+    0 0 60px rgba(255, 255, 255, 0.08),
+    0 0 90px rgba(255, 255, 255, 0.03);
+}
+
+/* Magnetic button effect */
+.magnetic-btn {
+  transition: transform 0.15s ease-out;
+}
+
+.magnetic-btn:active {
+  transform: scale(0.96);
+}
+
+/* Text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card hover glow */
+.card-glow {
+  transition: all 0.3s ease;
+}
+
+.card-glow:hover {
+  box-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.08),
+    0 0 40px rgba(255, 255, 255, 0.04);
+}
+
+/* Noise texture overlay */
+.noise-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Smooth page transitions */
+.page-transition {
+  animation: pageEnter 0.4s ease-out;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  100% {
-    background-position: 200% 0;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Subtle glow for active elements */
-.glow-active {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+/* Stagger children animation */
+.stagger-children > * {
+  animation: staggerFadeIn 0.5s ease-out backwards;
 }
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes staggerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Pulse animation for active states */
+.pulse-soft {
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Gradient text for categories */
+.category-gradient-tattoo { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); }
+.category-gradient-nails { background: linear-gradient(135deg, #feca57, #ff9f43); }
+.category-gradient-piercing { background: linear-gradient(135deg, #48dbfb, #0abde3); }
+.category-gradient-makeup { background: linear-gradient(135deg, #ff9ff3, #f368e0); }
+.category-gradient-hair { background: linear-gradient(135deg, #54a0ff, #2e86de); }
+.category-gradient-lashes { background: linear-gradient(135deg, #5f27cd, #341f97); }
