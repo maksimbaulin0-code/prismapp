@@ -34,6 +34,9 @@ htmlcov/
 
 # TypeScript/JavaScript build artifacts
 *.tsbuildinfo
+# Emitted next to vite.config.ts by `tsc -b` (Vite reads .ts directly)
+vite.config.js
+vite.config.d.ts
 
 # Databases
 *.db
