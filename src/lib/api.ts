@@ -1,6 +1,8 @@
 import { shrinkProProfileImagesForApi } from './imageCompress';
 
-const API_URL = '/api';
+/** Локально: Vite проксирует `/api` → :3001. На Vercel задайте VITE_API_URL (HTTPS) до хоста с Express, без `/api` на конце. */
+const API_ORIGIN = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+const API_URL = API_ORIGIN ? `${API_ORIGIN}/api` : '/api';
 
 export interface Specialist {
   id: number;
@@ -142,7 +144,7 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
     } else if (res.status === 404) {
       msg = `404: не найдено${hint ? ` — ${hint.slice(0, 120)}` : ''}`;
     } else if (res.status === 502 || res.status === 503 || res.status === 0) {
-      msg = `${res.status || 'Сеть'}: сервер API недоступен. Запустите бэкенд: npm run dev:server (порт 3001).`;
+      msg = `${res.status || 'Сеть'}: API недоступен. Локально: npm run dev:server. На Vercel: задайте VITE_API_URL на задеплоенный бэкенд.`;
     } else {
       msg = `Ошибка ${res.status}${hint ? ` — ${hint.slice(0, 200)}` : ''}`;
     }
