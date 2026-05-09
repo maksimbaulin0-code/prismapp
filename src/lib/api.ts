@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:3001/api';
+import { shrinkProProfileImagesForApi } from './imageCompress';
+
+const API_URL = '/api';
 
 export interface Specialist {
   id: number;
@@ -9,8 +11,12 @@ export interface Specialist {
   review_count: number;
   location: string | null;
   image_url: string | null;
+  cover_image?: string | null;
   portfolio?: string[];
   services?: Service[];
+  timeSlots?: TimeSlot[];
+  telegram?: string;
+  user_id?: number;
 }
 
 export interface Service {
@@ -19,6 +25,14 @@ export interface Service {
   name: string;
   price: number;
   duration: number;
+}
+
+export interface TimeSlot {
+  id: number;
+  specialist_id: number;
+  date: string;
+  time: string;
+  isBooked?: boolean;
 }
 
 export interface User {
@@ -32,118 +46,318 @@ export interface Booking {
   user_id: number;
   specialist_id: number;
   service_id: number;
+  slot_id?: number;
   date: string;
   status: string;
+  phone?: string;
+  notes?: string;
+  attachments?: string[];
+  specialist_name?: string;
+  service_name?: string;
+  price?: number;
+  duration?: number;
+  user_name?: string;
+}
+
+export interface Review {
+  id: number;
+  booking_id?: number;
+  user_id: number;
+  specialist_id: number;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
+export interface ProProfileData {
+  id?: number;
+  name: string;
+  bio: string;
+  address?: string;
+  categories: string[];
+  services: { name: string; price: number; duration: number }[];
+  portfolio: string[];
+  coverImage?: string;
+  telegram?: string;
+  user_id?: number;
+}
+
+const PRO_PROFILE_KEY = 'prism_pro_profile';
+const USER_ID_KEY = 'prism_user_id';
+
+export function getStoredUserId(): number | null {
+  const stored = localStorage.getItem(USER_ID_KEY);
+  return stored ? parseInt(stored, 10) : null;
+}
+
+export function setStoredUserId(id: number) {
+  localStorage.setItem(USER_ID_KEY, id.toString());
+}
+
+export function getStoredProProfile(): ProProfileData | null {
+  try {
+    const stored = localStorage.getItem(PRO_PROFILE_KEY);
+    if (!stored || stored === 'null') return null;
+    return JSON.parse(stored);
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredProProfile(data: ProProfileData | null) {
+  try {
+    if (data) {
+      localStorage.setItem(PRO_PROFILE_KEY, JSON.stringify(data));
+    } else {
+      localStorage.removeItem(PRO_PROFILE_KEY);
+    }
+  } catch (e) {
+    console.warn('prism_pro_profile: не удалось записать в localStorage (часто лимит 5MB с base64)', e);
+  }
+}
+
+/** Убирает из портфолио тот же URL, что и обложка (обложка хранится отдельно). */
+export function portfolioWithoutCoverUrl(
+  portfolio: string[] | undefined,
+  coverUrl: string | null | undefined
+): string[] | undefined {
+  if (!portfolio?.length) return portfolio;
+  const c = typeof coverUrl === 'string' ? coverUrl.trim() : '';
+  if (!c) return portfolio;
+  return portfolio.filter((p) => typeof p === 'string' && p.trim() !== c);
+}
+
+function unwrapSpecialistResponse(raw: unknown): Specialist {
+  if (
+    raw &&
+    typeof raw === 'object' &&
+    'specialist' in raw &&
+    (raw as { specialist?: Specialist }).specialist
+  ) {
+    return (raw as { specialist: Specialist }).specialist;
+  }
+  return raw as Specialist;
+}
+
+async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    cache: options?.cache ?? 'no-store',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  });
+  if (!res.ok) {
+    const hint = await res.text().catch(() => '');
+    let msg: string;
+    if (res.status === 413) {
+      msg =
+        '413: запрос слишком большой. Часто лимит у nginx/ngrok. Фото сжимаются перед отправкой — попробуйте ещё раз или уменьшите файл.';
+    } else if (res.status === 404) {
+      msg = `404: не найдено${hint ? ` — ${hint.slice(0, 120)}` : ''}`;
+    } else if (res.status === 502 || res.status === 503 || res.status === 0) {
+      msg = `${res.status || 'Сеть'}: сервер API недоступен. Запустите бэкенд: npm run dev:server (порт 3001).`;
+    } else {
+      msg = `Ошибка ${res.status}${hint ? ` — ${hint.slice(0, 200)}` : ''}`;
+    }
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function createOrGetUser(telegramId: number, name: string): Promise<User> {
+  return fetchApi<User>('/users', {
+    method: 'POST',
+    body: JSON.stringify({ telegram_id: telegramId, name }),
+  });
+}
+
+/** Сохраняет отображаемое имя клиента в БД (вкладка «Профиль»). */
+export async function updateUserDisplayName(telegramId: number, name: string): Promise<User> {
+  const trimmed = String(name).trim();
+  return fetchApi<User>('/users/update-name', {
+    method: 'POST',
+    body: JSON.stringify({ telegram_id: telegramId, name: trimmed }),
+  });
 }
 
 export async function getSpecialists(category?: string): Promise<Specialist[]> {
-  try {
-    const url = category && category !== 'all' 
-      ? `${API_URL}/specialists?category=${category}` 
-      : `${API_URL}/specialists`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch');
-    return await res.json();
-  } catch (e) {
-    console.log('API not available, showing demo data');
-    return getMockSpecialists();
-  }
+  const url = category && category !== 'all' 
+    ? `/specialists?category=${category}` 
+    : '/specialists';
+  return fetchApi<Specialist[]>(url);
 }
 
 export async function getSpecialistById(id: number): Promise<Specialist | null> {
   try {
-    const res = await fetch(`${API_URL}/specialists/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch');
-    return await res.json();
-  } catch (e) {
-    const mock = getMockSpecialists();
-    return mock.find(s => s.id === id) || null;
+    return await fetchApi<Specialist>(`/specialists/${id}`);
+  } catch {
+    return null;
   }
 }
 
-export async function createUser(telegramId: number, name: string): Promise<User> {
-  const res = await fetch(`${API_URL}/users`, {
+export async function getSpecialistByUserId(userId: number): Promise<Specialist | null> {
+  try {
+    return await fetchApi<Specialist>(`/specialists-by-user/${userId}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function createSpecialist(data: ProProfileData): Promise<Specialist> {
+  const shrunk = await shrinkProProfileImagesForApi(data);
+  const coverStr =
+    typeof shrunk.coverImage === 'string' && shrunk.coverImage.trim()
+      ? shrunk.coverImage.trim()
+      : null;
+  const raw = await fetchApi<unknown>('/specialists', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ telegram_id: telegramId, name }),
+    body: JSON.stringify({
+      name: shrunk.name,
+      bio: shrunk.bio,
+      category: shrunk.categories?.[0] || 'other',
+      location: shrunk.address,
+      image_url: shrunk.coverImage || shrunk.portfolio?.[0] || null,
+      cover_image: shrunk.coverImage,
+      portfolio: portfolioWithoutCoverUrl(shrunk.portfolio, coverStr),
+      services: shrunk.services,
+      telegram: shrunk.telegram,
+      user_id: shrunk.user_id,
+    }),
   });
-  return await res.json();
+
+  const specialist = unwrapSpecialistResponse(raw);
+
+  setStoredProProfile({
+    ...data,
+    id: specialist.id,
+    portfolio: specialist.portfolio ?? data.portfolio,
+  });
+
+  return specialist;
 }
 
-export async function createBooking(
-  userId: number,
-  specialistId: number,
-  serviceId: number,
-  date: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const res = await fetch(`${API_URL}/bookings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: userId,
-        specialist_id: specialistId,
-        service_id: serviceId,
-        date,
-      }),
+export async function updateSpecialist(id: number, data: Partial<ProProfileData>): Promise<Specialist> {
+  const stored = getStoredProProfile();
+  const merged: Partial<ProProfileData> = stored ? { ...stored, ...data } : { ...data };
+  const shrunk = await shrinkProProfileImagesForApi(merged);
+  const cover =
+    typeof shrunk.coverImage === 'string' && shrunk.coverImage.trim()
+      ? shrunk.coverImage.trim()
+      : null;
+  const thumb = cover || shrunk.portfolio?.[0] || null;
+
+  const nameStr = String(shrunk.name ?? merged.name ?? stored?.name ?? '').trim();
+  if (!nameStr) {
+    throw new Error('Не задано имя профиля (name) для сохранения');
+  }
+
+  const putBody: Record<string, unknown> = {
+    name: nameStr,
+    bio: shrunk.bio ?? merged.bio ?? null,
+    location: shrunk.address ?? merged.address ?? null,
+    image_url: thumb,
+    cover_image: cover ?? thumb,
+    telegram: shrunk.telegram ?? merged.telegram ?? null,
+    category: shrunk.categories?.[0] ?? merged.categories?.[0] ?? null,
+  };
+  const port = shrunk.portfolio ?? merged.portfolio;
+  if (port !== undefined) {
+    putBody.portfolio = portfolioWithoutCoverUrl(port, cover ?? thumb) ?? port;
+  }
+  const svcs = shrunk.services ?? merged.services;
+  if (svcs !== undefined) putBody.services = svcs;
+
+  const raw = await fetchApi<unknown>(`/specialists/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(putBody),
+  });
+
+  const specialist = unwrapSpecialistResponse(raw);
+
+  if (stored) {
+    setStoredProProfile({
+      ...stored,
+      ...data,
+      id: specialist.id,
+      name: specialist.name,
+      bio: specialist.bio ?? stored.bio,
+      address: specialist.location ?? stored.address,
+      coverImage: specialist.cover_image || specialist.image_url || stored.coverImage,
+      portfolio: specialist.portfolio ?? stored.portfolio,
     });
-    await res.json();
-    return { success: res.ok };
-  } catch (e) {
-    return { success: false, error: String(e) };
+  } else {
+    const d = data as ProProfileData;
+    setStoredProProfile({
+      ...d,
+      id: specialist.id,
+      name: specialist.name,
+      bio: specialist.bio ?? d.bio,
+      address: specialist.location ?? d.address,
+      coverImage: specialist.cover_image || specialist.image_url || d.coverImage,
+      portfolio: specialist.portfolio ?? d.portfolio,
+    });
   }
+
+  return specialist;
 }
 
-export async function getUserBookings(userId: number): Promise<any[]> {
-  try {
-    const res = await fetch(`${API_URL}/bookings/${userId}`);
-    return await res.json();
-  } catch (e) {
-    return [];
-  }
+export async function createBooking(booking: {
+  user_id: number;
+  specialist_id: number;
+  service_id: number;
+  date: string;
+}): Promise<{ success: boolean; booking: Booking }> {
+  return fetchApi<{ success: boolean; booking: Booking }>('/bookings', {
+    method: 'POST',
+    body: JSON.stringify(booking),
+  });
 }
 
-function getMockSpecialists(): Specialist[] {
-  return [
-    {
-      id: 1,
-      name: 'Ink Master Studio',
-      category: 'tattoo',
-      bio: 'Мастера татуировки',
-      rating: 4.9,
-      review_count: 234,
-      location: 'Москва',
-      image_url: 'https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=400',
-      services: [
-        { id: 1, specialist_id: 1, name: 'Маленькая тату', price: 150, duration: 60 },
-        { id: 2, specialist_id: 1, name: 'Средний размер', price: 350, duration: 180 },
-      ],
-    },
-    {
-      id: 2,
-      name: 'Luxe Nails Bar',
-      category: 'nails',
-      bio: 'Премиальный нейл-арт',
-      rating: 4.8,
-      review_count: 189,
-      location: 'Москва',
-      image_url: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400',
-      services: [
-        { id: 3, specialist_id: 2, name: 'Гель-маникюр', price: 45, duration: 45 },
-      ],
-    },
-    {
-      id: 3,
-      name: 'Pierce Paradise',
-      category: 'piercing',
-      bio: 'Пирсинг-студия',
-      rating: 4.7,
-      review_count: 156,
-      location: 'Москва',
-      image_url: 'https://images.unsplash.com/photo-1620331313174-9187a5f5a5f8?w=400',
-      services: [
-        { id: 4, specialist_id: 3, name: 'Прокол мочки', price: 30, duration: 15 },
-      ],
-    },
-  ];
+export async function getUserBookings(userId: number): Promise<Booking[]> {
+  return fetchApi<Booking[]>(`/bookings/${userId}`);
+}
+
+export async function getSpecialistBookings(specialistId: number): Promise<Booking[]> {
+  return fetchApi<Booking[]>(`/specialist-bookings/${specialistId}`);
+}
+
+export async function updateBookingStatus(bookingId: number, status: string): Promise<Booking> {
+  return fetchApi<Booking>(`/bookings/${bookingId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function getTimeSlots(specialistId: number, date?: string): Promise<TimeSlot[]> {
+  const url = date 
+    ? `/time-slots/${specialistId}?date=${date}` 
+    : `/time-slots/${specialistId}`;
+  return fetchApi<TimeSlot[]>(url);
+}
+
+export async function addTimeSlot(slot: {
+  specialist_id: number;
+  date: string;
+  time: string;
+}): Promise<TimeSlot> {
+  return fetchApi<TimeSlot>('/time-slots', {
+    method: 'POST',
+    body: JSON.stringify(slot),
+  });
+}
+
+export async function deleteTimeSlot(slotId: number): Promise<void> {
+  await fetchApi<void>(`/time-slots/${slotId}`, {
+    method: 'DELETE',
+  });
+}
+
+export function saveProProfile(data: ProProfileData) {
+  setStoredProProfile(data);
+}
+
+export function getProProfile(): ProProfileData | null {
+  return getStoredProProfile();
 }

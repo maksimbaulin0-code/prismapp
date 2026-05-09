@@ -45,7 +45,7 @@ export default function Welcome() {
           transition={{ delay: 0.4 }}
           className="text-4xl font-bold mb-3 text-gradient"
         >
-          BeautyFind
+          Prism
         </motion.h1>
 
         <motion.p
@@ -114,7 +114,7 @@ export default function Welcome() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setStep('name')}
-                className="px-10 py-4 bg-accent text-background rounded-xl font-bold text-base magnetic-btn glow-strong flex items-center gap-2"
+                className="px-10 py-4 bg-accent text-background rounded-xl font-bold text-base magnetic-btn glow-strong flex items-center justify-center gap-2 w-full max-w-xs"
               >
                 Начать
                 <ArrowRight className="w-5 h-5" />

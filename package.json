@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "tsx watch server.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "tsx server.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",
@@ -35,6 +37,7 @@
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
+    "tsx": "^4.7.0",
     "typescript": "^5.4.5",
     "vite": "^5.2.11"
   }

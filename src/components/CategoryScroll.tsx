@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 interface CategoryItem {
   id: string;
   name: string;
-  icon: React.ReactNode;
 }
 
 interface CategoryScrollProps {
@@ -19,42 +18,30 @@ export function CategoryScroll({
   onSelectCategory,
 }: CategoryScrollProps) {
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide py-4">
-      <motion.div 
-        className="flex gap-3 px-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        {categories.map((category, index) => (
-          <motion.button
+    <div className="w-full overflow-x-auto scrollbar-hide py-3">
+      <div className="flex gap-2 px-4">
+        {categories.map((category) => (
+          <button
             key={category.id}
-            layoutId={`category-${category.id}`}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
             onClick={() => onSelectCategory(category.id)}
             className={cn(
-              'flex flex-col items-center justify-center gap-2 min-w-[72px] p-3 rounded-soft border transition-all duration-200',
+              'relative px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200',
               selectedCategory === category.id
-                ? 'bg-accent text-background border-accent glow-active'
-                : 'bg-card text-gray-400 border-border hover:border-white/20'
+                ? 'bg-white text-black'
+                : 'bg-card text-gray-400 border border-white/[0.08] hover:border-white/20 hover:text-gray-200'
             )}
           >
-            <div className={cn(
-              'p-2 rounded-sharp',
-              selectedCategory === category.id ? 'bg-background' : 'bg-card'
-            )}>
-              {category.icon}
-            </div>
-            <span className="text-xs font-medium whitespace-nowrap">
-              {category.name}
-            </span>
-          </motion.button>
+            {category.name}
+            {selectedCategory === category.id && (
+              <motion.div
+                layoutId="active-category"
+                className="absolute inset-0 bg-white rounded-full -z-10"
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              />
+            )}
+          </button>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
