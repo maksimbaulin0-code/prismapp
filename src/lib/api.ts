@@ -59,16 +59,6 @@ export interface Booking {
   user_name?: string;
 }
 
-export interface Review {
-  id: number;
-  booking_id?: number;
-  user_id: number;
-  specialist_id: number;
-  rating: number;
-  comment: string;
-  created_at: string;
-}
-
 export interface ProProfileData {
   id?: number;
   name: string;
@@ -84,11 +74,6 @@ export interface ProProfileData {
 
 const PRO_PROFILE_KEY = 'prism_pro_profile';
 const USER_ID_KEY = 'prism_user_id';
-
-export function getStoredUserId(): number | null {
-  const stored = localStorage.getItem(USER_ID_KEY);
-  return stored ? parseInt(stored, 10) : null;
-}
 
 export function setStoredUserId(id: number) {
   localStorage.setItem(USER_ID_KEY, id.toString());

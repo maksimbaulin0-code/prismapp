@@ -7,14 +7,10 @@
     "dev": "vite",
     "dev:server": "tsx watch server.ts",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
     "preview": "vite preview",
     "server": "tsx server.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.105.3",
-    "better-sqlite3": "^12.9.0",
-    "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
@@ -26,7 +22,6 @@
     "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
