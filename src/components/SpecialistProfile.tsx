@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, X, Clock, MapPin, Star, Send } from 'lucide-react';
+import { ArrowLeft, X, Clock, MapPin, Star, Mail } from 'lucide-react';
 import type { Specialist, Service } from '@/lib/api';
 import { BookingModal } from './BookingModal';
 import { telegramContactToOpenUrl } from '@/lib/telegramLinks';
@@ -133,10 +133,11 @@ export function SpecialistProfile({ specialist, onBack, onBookSuccess }: Special
                   app.openTelegramLink(telegramLink.href);
                 }
               }}
-              className="inline-flex items-center gap-2 text-sm text-accent hover:text-white mb-6 transition-colors"
+              className="inline-flex items-center justify-center w-11 h-11 rounded-full mb-6 border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 hover:text-white transition-colors"
+              aria-label={`Написать в Telegram: ${telegramLink.display}`}
+              title={`Написать в Telegram: ${telegramLink.display}`}
             >
-              <Send className="w-4 h-4 shrink-0" />
-              <span className="break-all">Написать в Telegram: {telegramLink.display}</span>
+              <Mail className="w-5 h-5 shrink-0" strokeWidth={2} />
             </a>
           )}
 

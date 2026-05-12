@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../lib/auth';
-import { LogOut, Edit2, Heart, Bell, MessageCircle, Info, X, ChevronRight } from 'lucide-react';
+import { LogOut, Edit2, Heart, Bell, MessageCircle, Info, X, ChevronRight, Mail } from 'lucide-react';
+
+const SUPPORT_TELEGRAM_URL = 'https://t.me/beautyfind_support';
 
 export default function Profile() {
   const { user, signOut, updateUserName } = useAuth();
@@ -150,15 +152,38 @@ export default function Profile() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-line">
-                {activeModal === 'favorites'
-                  ? 'Здесь будут ваши избранные мастера.'
-                  : activeModal === 'notifications'
-                  ? 'Настройки уведомлений будут доступны в следующем обновлении.'
-                  : activeModal === 'support'
-                  ? 'Напишите нам в Telegram: @beautyfind_support'
-                  : 'Prism v0.0.1\nПриложение для поиска бьюти-мастеров.'}
-              </p>
+              {activeModal === 'support' ? (
+                <div className="flex flex-col items-center gap-4 pt-1">
+                  <p className="text-gray-400 text-sm text-center leading-relaxed">
+                    Откройте чат с поддержкой в Telegram
+                  </p>
+                  <a
+                    href={SUPPORT_TELEGRAM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      const app = window.Telegram?.WebApp;
+                      if (app?.openTelegramLink) {
+                        e.preventDefault();
+                        app.openTelegramLink(SUPPORT_TELEGRAM_URL);
+                      }
+                    }}
+                    className="inline-flex items-center justify-center w-12 h-12 rounded-full border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 hover:text-white transition-colors"
+                    aria-label="Написать в Telegram: @beautyfind_support"
+                    title="@beautyfind_support"
+                  >
+                    <Mail className="w-5 h-5 shrink-0" strokeWidth={2} />
+                  </a>
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-line">
+                  {activeModal === 'favorites'
+                    ? 'Здесь будут ваши избранные мастера.'
+                    : activeModal === 'notifications'
+                    ? 'Настройки уведомлений будут доступны в следующем обновлении.'
+                    : 'Prism v0.0.1\nПриложение для поиска бьюти-мастеров.'}
+                </p>
+              )}
             </motion.div>
           </motion.div>
         )}
